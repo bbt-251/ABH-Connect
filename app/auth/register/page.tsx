@@ -16,7 +16,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, User, Briefcase, Building, Shield, Check, CalendarIcon, X, Plus, AlertCircle } from "lucide-react"
-import { format, subYears } from "date-fns"
+import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
 // Interfaces
@@ -184,7 +184,7 @@ export default function RegisterPage() {
     const [applicantData, setApplicantData] = useState<ApplicantRegistrationData>({
         firstName: "",
         surname: "",
-        birthDate: subYears(new Date(), 18),
+        birthDate: undefined,
         birthPlace: "",
         gender: "",
         levelOfEducation: "",
@@ -249,7 +249,6 @@ export default function RegisterPage() {
         const today = new Date()
         const age = today.getFullYear() - birthDate.getFullYear()
         const monthDiff = today.getMonth() - birthDate.getMonth()
-        console.log("month diff: ", monthDiff)
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             return age - 1 >= 18
         }
@@ -449,22 +448,25 @@ export default function RegisterPage() {
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button
+                                                type="button"
                                                 variant="outline"
                                                 className={cn(
-                                                    "w-full h-12 mt-1 justify-start text-left font-normal",
+                                                    "w-full h-12 mt-1 justify-start text-left font-normal relative",
                                                     !applicantData.birthDate && "text-muted-foreground",
                                                 )}
+                                                onClick={(e) => e.preventDefault()}
                                             >
                                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                                 {applicantData.birthDate ? format(applicantData.birthDate, "PPP") : "Select birth date"}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <PopoverContent className="w-auto p-0 z-[100]" align="start">
                                             <Calendar
                                                 mode="single"
                                                 selected={applicantData.birthDate}
                                                 onSelect={(date) => handleInputChange("birthDate", date)}
                                                 disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                                                initialFocus
                                             />
                                         </PopoverContent>
                                     </Popover>
