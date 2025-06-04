@@ -494,25 +494,22 @@ export default function RegisterPage() {
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button
-                                                type="button"
                                                 variant="outline"
                                                 className={cn(
-                                                    "w-full h-12 mt-1 justify-start text-left font-normal relative",
+                                                    "w-full h-12 mt-1 justify-start text-left font-normal",
                                                     !applicantData.birthDate && "text-muted-foreground",
                                                 )}
-                                                onClick={(e) => e.preventDefault()}
                                             >
                                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                                 {applicantData.birthDate ? format(applicantData.birthDate, "PPP") : "Select birth date"}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                                        <PopoverContent className="w-auto p-0 z-50" align="start">
                                             <Calendar
                                                 mode="single"
                                                 selected={applicantData.birthDate}
                                                 onSelect={(date) => handleInputChange("birthDate", date)}
                                                 disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                                initialFocus
                                             />
                                         </PopoverContent>
                                     </Popover>
