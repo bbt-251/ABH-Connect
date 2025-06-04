@@ -22,6 +22,7 @@ import CompanyModel from "@/models/company"
 import { useRegister } from "@/hooks/auth/useRegister"
 import { uploadBusinessLicense } from "@/lib/api/firebase/upload/uploadBusinessDocuments"
 import { uploadCompanyLogo } from "@/lib/api/firebase/upload/uploadCompanyLogo"
+import { useToast } from "@/context/toastContext"
 
 // Interfaces
 interface ApplicantRegistrationData {
@@ -186,6 +187,7 @@ export default function RegisterPage() {
     const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
 
     const { register } = useRegister()
+    const { showToast } = useToast();
 
     const steps = userType === "applicant" ? applicantSteps : companySteps
 
@@ -430,6 +432,8 @@ export default function RegisterPage() {
                         if (companyLogoFile) {
                             await uploadCompanyLogo(c.id, companyLogoFile)
                         }
+
+                        showToast("Registration successful!", "success");
                     });
             }
 

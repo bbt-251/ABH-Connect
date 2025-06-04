@@ -43,8 +43,8 @@ export async function getCompanies() {
     return response;
 }
 
-export async function getCompany(id: string) {
-    const q = query(collectionRef, where("id", "==", id));
+export async function getCompany(uid: string) {
+    const q = query(collectionRef, where("uid", "==", uid));
 
     const response: CompanyModel | null = await getDocs(q)
         .then((snapshot: QuerySnapshot<DocumentData>) => {
@@ -55,7 +55,7 @@ export async function getCompany(id: string) {
                     ...doc.data(),
                 });
             });
-            return data.find(c => c.id === id);
+            return data.find(c => c.uid === uid);
         })
         .catch((e: any) => {
             console.log("err: ", e);
