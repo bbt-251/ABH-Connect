@@ -16,7 +16,7 @@ export default function AuthPage() {
     const [loading, setLoading] = useState<boolean>(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [userType, setUserType] = useState("");
+    const [userType, setUserType] = useState("applicant");
     const { error, login } = useLogin();
     const { showToast } = useToast(); // Use the toast hook
 
