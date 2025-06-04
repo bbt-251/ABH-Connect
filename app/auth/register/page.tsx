@@ -18,6 +18,10 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, User, Briefcase, Building, Shield, Check, CalendarIcon, X, Plus, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import CompanyModel from "@/models/company"
+import { useRegister } from "@/hooks/auth/useRegister"
+import { uploadBusinessLicense } from "@/lib/api/firebase/upload/uploadBusinessDocuments"
+import { uploadCompanyLogo } from "@/lib/api/firebase/upload/uploadCompanyLogo"
 
 // Interfaces
 interface ApplicantRegistrationData {
@@ -178,6 +182,10 @@ export default function RegisterPage() {
     const [newSkill, setNewSkill] = useState("")
     const [newLanguage, setNewLanguage] = useState("")
     const [newCertification, setNewCertification] = useState("")
+    const [businessLicenseFile, setBusinessLicenseFile] = useState<File | null>(null);
+    const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+
+    const { register } = useRegister()
 
     const steps = userType === "applicant" ? applicantSteps : companySteps
 
@@ -380,7 +388,7 @@ export default function RegisterPage() {
             return
         }
 
-        setLoading(true)
+        // setLoading(true)
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -389,7 +397,41 @@ export default function RegisterPage() {
             setValidationErrors([])
         } else {
             // Registration complete
-            console.log("Registration completed:", userType === "applicant" ? applicantData : companyData)
+            // console.log("Registration completed:", userType === "applicant" ? applicantData : companyData)
+
+            if (userType !== "applicant") {
+                const companyProfile: Omit<CompanyModel, "id" | "uid"> = {
+                    companyName: companyData.companyName,
+                    companyType: companyData.companyType,
+                    companySize: companyData.companySize,
+                    country: companyData.country,
+                    cityLocation: companyData.cityLocation,
+                    officialEmail: companyData.officialEmail,
+                    officialPhoneCountryCode: companyData.officialPhoneCountryCode,
+                    officialPhone: companyData.officialPhone,
+                    websiteUrl: companyData.websiteUrl,
+                    fullName: companyData.fullName,
+                    email: companyData.adminEmail,
+                    adminPhoneCountryCode: companyData.adminPhoneCountryCode,
+                    adminPhone: companyData.adminPhone,
+                    tinNumber: companyData.tinNumber,
+                    businessLicenseDocument: null,
+                    companyLogoDocument: null,
+                    companyLogoUrl: null,
+                };
+
+                // create company
+                await register({ email: companyProfile.email, password: companyData.password, company: companyProfile })
+                    .then(async (c) => {
+                        // upload files 
+                        if (businessLicenseFile) {
+                            await uploadBusinessLicense(c.id, businessLicenseFile)
+                        }
+                        if (companyLogoFile) {
+                            await uploadCompanyLogo(c.id, companyLogoFile)
+                        }
+                    });
+            }
 
             // Show success message and redirect to login page
             setLoading(false)
@@ -1043,6 +1085,7 @@ export default function RegisterPage() {
                                             const file = e.target.files?.[0]
                                             if (file) {
                                                 console.log("Business license selected:", file.name)
+                                                setBusinessLicenseFile(file)
                                             }
                                         }}
                                     />
@@ -1059,7 +1102,20 @@ export default function RegisterPage() {
                                                 </svg>
                                             </div>
                                             <div className="text-sm text-gray-600">
-                                                <span className="font-medium">Click to upload</span> or drag and drop
+                                                {
+                                                    businessLicenseFile ?
+                                                        <>
+                                                            <span className="font-medium">
+                                                                {businessLicenseFile.name}
+                                                            </span>
+                                                        </>
+                                                        :
+                                                        <>
+                                                            <span className="font-medium">
+                                                                Click to upload
+                                                            </span> or drag and drop
+                                                        </>
+                                                }
                                             </div>
                                             <div className="text-xs text-gray-400">PDF, JPG, PNG (max 10MB)</div>
                                         </div>
@@ -1079,6 +1135,7 @@ export default function RegisterPage() {
                                             const file = e.target.files?.[0]
                                             if (file) {
                                                 console.log("Company logo selected:", file.name)
+                                                setCompanyLogoFile(file);
                                             }
                                         }}
                                     />
@@ -1095,7 +1152,20 @@ export default function RegisterPage() {
                                                 </svg>
                                             </div>
                                             <div className="text-sm text-gray-600">
-                                                <span className="font-medium">Click to upload</span> or drag and drop
+                                                {
+                                                    companyLogoFile ?
+                                                        <>
+                                                            <span className="font-medium">
+                                                                {companyLogoFile.name}
+                                                            </span>
+                                                        </>
+                                                        :
+                                                        <>
+                                                            <span className="font-medium">
+                                                                Click to upload
+                                                            </span> or drag and drop
+                                                        </>
+                                                }
                                             </div>
                                             <div className="text-xs text-gray-400">JPG, PNG, SVG (max 5MB) - Optional</div>
                                         </div>

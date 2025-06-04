@@ -1,30 +1,30 @@
-import UserModel from "@/models/user";
-import { usersCollection } from "../firebase/collections";
+import { companyCollection } from "../firebase/collections";
 import { doc, setDoc, query, getDocs, QuerySnapshot, DocumentData, where, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/init";
+import CompanyModel from "@/models/company";
 
-const collectionRef = usersCollection;
+const collectionRef = companyCollection;
 const collectionName = collectionRef.id;
 
-export async function createUser(data: UserModel) {
-    let result: boolean = false;
-    
+export async function createCompany(data: Omit<CompanyModel, "id">) {
+
     const docRef = doc(collectionRef);
 
-    result = await setDoc(docRef, { ...data, id: docRef.id })
-        .then(() => true)
+    await setDoc(docRef, { ...data, id: docRef.id })
+        .then(() => {
+        })
         .catch((err) => {
             console.log("err", err);
             return false;
         })
 
-    return result;
+    return await getCompany(docRef.id);
 }
 
-export async function getUsers() {
+export async function getCompanies() {
     const q = query(collectionRef);
 
-    const response: UserModel[] = await getDocs(q)
+    const response: CompanyModel[] = await getDocs(q)
         .then((snapshot: QuerySnapshot<DocumentData>) => {
             const data: any[] = [];
             snapshot.docs.map((doc) => {
@@ -43,10 +43,10 @@ export async function getUsers() {
     return response;
 }
 
-export async function getUser(uid: string) {
-    const q = query(collectionRef, where("uid", "==", uid));
+export async function getCompany(id: string) {
+    const q = query(collectionRef, where("id", "==", id));
 
-    const response: UserModel[] = await getDocs(q)
+    const response: CompanyModel | null = await getDocs(q)
         .then((snapshot: QuerySnapshot<DocumentData>) => {
             const data: any[] = [];
             snapshot.docs.map((doc) => {
@@ -55,17 +55,17 @@ export async function getUser(uid: string) {
                     ...doc.data(),
                 });
             });
-            return data;
+            return data.find(c => c.id === id);
         })
         .catch((e: any) => {
             console.log("err: ", e);
-            return [];
+            return null;
         });
 
     return response;
 }
 
-export async function updateUser(data: UserModel) {
+export async function updateCompany(data: Partial<CompanyModel>) {
     let result: boolean = false;
 
     const docRef = doc(db, collectionName, data.id ?? "");
@@ -80,7 +80,7 @@ export async function updateUser(data: UserModel) {
     return result;
 }
 
-export async function deleteUser(id: string) {
+export async function deleteCompany(id: string) {
     let result: boolean = await deleteDoc(doc(db, collectionName, id))
         .then(() => {
             return true;
