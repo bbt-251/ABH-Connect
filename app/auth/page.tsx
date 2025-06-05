@@ -26,9 +26,15 @@ export default function AuthPage() {
     useEffect(() => {
         if (userData && !authLoading) {
             const { applicant, company } = userData;
+
             let name = "";
-            if (company) name = company.fullName;
-            if (applicant) name = `${applicant.firstName} ${applicant.surname}`;
+            if (company) {
+                name = company.fullName;
+            }
+            if (applicant) {
+                name = `${applicant.firstName} ${applicant.surname}`;
+                router.push("/applicant"); // Redirect to /applicant
+            }
 
             showToast(`${name}!`, "Welcome Back, ", "success");
         }
@@ -44,12 +50,17 @@ export default function AuthPage() {
 
             if (loggedInUser) {
                 const { applicant, company } = loggedInUser;
+
                 let name = "";
-                if (company) name = company.fullName;
-                if (applicant) name = applicant.firstName;
+                if (company) {
+                    name = company.fullName;
+                }
+                if (applicant) {
+                    name = `${applicant.firstName} ${applicant.surname}`;
+                    router.push("/applicant"); // Redirect to /applicant
+                }
 
                 showToast(`Welcome back, ${name}!`, "Logged In!", "success");
-                // router.push("/dashboard"); // Redirect to dashboard or another page
             } else if (loggedInUser === null) {
                 showToast("Account doesn't exist!", "Oops!", "warning");
             }
