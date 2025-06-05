@@ -1,6 +1,6 @@
 export default interface CompanyModel {
     id: string;
-    uid: String;
+    uid: string;
     companyName: string;
     companyType: string;
     companySize: string;

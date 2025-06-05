@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/api/firebase/init';
 import { getCompany } from '@/lib/api/user/company-service';
+import { getApplicant } from '@/lib/api/user/applicant-service';
+import CompanyModel from '@/models/company';
+import ApplicantModel from '@/models/applicant';
 
 interface LoginProps {
     email: string;
@@ -15,6 +18,11 @@ interface LoginHook {
     error: string | null;
 }
 
+export interface LoggedInUser {
+    company: CompanyModel | null;
+    applicant: ApplicantModel | null;
+}
+
 export const useLogin = (): LoginHook => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -23,15 +31,20 @@ export const useLogin = (): LoginHook => {
         setIsLoading(true);
         setError(null);
 
-        let returnData = null;
+        let returnData: LoggedInUser | null = null;
 
         try {
             const user = await signInWithEmailAndPassword(auth, email, password);
-            console.log('User logged in:', user);
 
             // fetch from company collection. if not found, fetch from applicant collection
-            returnData = await getCompany(user.user.uid);
-            // if(returnData === null) await getApplicant(user.user.uid);
+            const company = await getCompany(user.user.uid);
+            const applicant = await getApplicant(user.user.uid);
+
+            returnData = {
+                company: company,
+                applicant: applicant,
+            };
+
         } catch (err) {
             let errorMessage = 'Login failed. Please try again.';
 

@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/api/firebase/init';
 import CompanyModel from '@/models/company';
 import { createCompany } from '@/lib/api/user/company-service';
+import { createApplicant } from '@/lib/api/user/applicant-service';
 
 interface RegisterProps {
     email: string;
@@ -35,7 +36,9 @@ export const useRegister = (): RegisterHook => {
             if (company) {
                 returnData = await createCompany({ ...company, uid: user.user.uid });
             }
-            // if (applicant) await createCompany(applicant);
+            if (applicant) {
+                returnData = await createApplicant({ ...applicant, uid: user.user.uid });
+            }
 
         } catch (err) {
             let errorMessage = 'Registration failed. Please try again.';

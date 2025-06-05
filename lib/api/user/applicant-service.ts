@@ -1,12 +1,12 @@
-import { companyCollection } from "../firebase/collections";
+import { applicantCollection } from "../firebase/collections";
 import { doc, setDoc, query, getDocs, QuerySnapshot, DocumentData, where, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/init";
-import CompanyModel from "@/models/company";
+import ApplicantModel from "@/models/applicant";
 
-const collectionRef = companyCollection;
+const collectionRef = applicantCollection;
 const collectionName = collectionRef.id;
 
-export async function createCompany(data: Omit<CompanyModel, "id">) {
+export async function createApplicant(data: Omit<ApplicantModel, "id">) {
 
     const docRef = doc(collectionRef);
 
@@ -18,13 +18,13 @@ export async function createCompany(data: Omit<CompanyModel, "id">) {
             return false;
         })
 
-    return await getCompany(data.uid);
+    return await getApplicant(data.uid);
 }
 
-export async function getCompanies() {
+export async function getApplicants() {
     const q = query(collectionRef);
 
-    const response: CompanyModel[] = await getDocs(q)
+    const response: ApplicantModel[] = await getDocs(q)
         .then((snapshot: QuerySnapshot<DocumentData>) => {
             const data: any[] = [];
             snapshot.docs.map((doc) => {
@@ -43,10 +43,10 @@ export async function getCompanies() {
     return response;
 }
 
-export async function getCompany(uid: string) {
+export async function getApplicant(uid: string) {
     const q = query(collectionRef, where("uid", "==", uid));
 
-    const response: CompanyModel | null = await getDocs(q)
+    const response: ApplicantModel | null = await getDocs(q)
         .then((snapshot: QuerySnapshot<DocumentData>) => {
             const data: any[] = [];
             snapshot.docs.map((doc) => {
@@ -65,7 +65,7 @@ export async function getCompany(uid: string) {
     return response;
 }
 
-export async function updateCompany(data: Partial<CompanyModel>) {
+export async function updateApplicant(data: Partial<ApplicantModel>) {
     let result: boolean = false;
 
     const docRef = doc(db, collectionName, data.id ?? "");
@@ -80,7 +80,7 @@ export async function updateCompany(data: Partial<CompanyModel>) {
     return result;
 }
 
-export async function deleteCompany(id: string) {
+export async function deleteApplicant(id: string) {
     let result: boolean = await deleteDoc(doc(db, collectionName, id))
         .then(() => {
             return true;

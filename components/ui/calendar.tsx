@@ -15,7 +15,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
             animate
             showOutsideDays={showOutsideDays}
             className={cn("p-3", className)}
-            endMonth={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
+            // endMonth={new Date(new Date().setFullYear(new Date().getFullYear() - 18))}
             navLayout="around"
             classNames={{
                 // months: "flex flex-col p-4 items-between space-y-4",
