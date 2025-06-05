@@ -478,6 +478,8 @@ export default function RegisterPage() {
     useEffect(() => {
         if (cvFile) {
             const callCVAutofillAPI = async () => {
+                showToast("Please wait while we process your CV...", "Info", "default");
+
                 const formData = new FormData();
                 formData.append("file", cvFile);
                 formData.append("yearsOfExperience", JSON.stringify(applicantData.yearsOfExperience));
@@ -495,7 +497,49 @@ export default function RegisterPage() {
                     }
 
                     const data = await res.json();
-                    console.log("Autofill result:", data.result);
+                    const result = JSON.parse(data.result);
+                    console.log("result: ", result);
+
+                    if (typeof result === typeof {}) {
+                        const professionalExperience: any[] = result.professionalExperience;
+                        const educationalExperience: any[] = result.educationalExperience;
+
+                        const updateForProfessionalExperience = [
+                            ...applicantData.professionalExperiences,
+                            ...professionalExperience.map(exp => ({
+                                ...exp,
+                                companyName: exp.company,
+                                startDate: new Date(exp.startDate),
+                                endDate: exp.endDate.toLowerCase() === "present"
+                                    ? undefined // Set to undefined for "present"
+                                    : !isNaN(new Date(exp.endDate).getTime())
+                                        ? new Date(exp.endDate)
+                                        : undefined,
+                                currentlyWorking: exp.endDate === "" ? true : false,
+                                id: Date.now().toString() + Math.random().toString(36).substring(2, 15), // Generate a unique ID
+                            })),
+                        ];
+
+                        const updateForEducationalExperience = [
+                            ...applicantData.educationExperiences,
+                            ...educationalExperience.map(exp => ({
+                                ...exp,
+                                educationLevel: exp.educationalLevel,
+                                startDate: new Date(exp.startDate),
+                                endDate: exp.endDate.toLowerCase() === "present"
+                                    ? undefined // Set to undefined for "present"
+                                    : !isNaN(new Date(exp.endDate).getTime())
+                                        ? new Date(exp.endDate)
+                                        : undefined,
+                                currentlyStudying: exp.endDate === "" ? true : false,
+                                id: Date.now().toString() + Math.random().toString(36).substring(2, 15), // Generate a unique ID
+                            })),
+                        ];
+
+                        handleInputChange("professionalExperiences", updateForProfessionalExperience);
+                        handleInputChange("educationExperiences", updateForEducationalExperience);
+                    }
+
                 } catch (err) {
                     console.error("Fetch error:", err);
                 }
@@ -1225,6 +1269,7 @@ export default function RegisterPage() {
                                     </label>
                                 </div>
                             </div>
+
                         </CardContent>
                     </Card>
                 )
@@ -1237,6 +1282,7 @@ export default function RegisterPage() {
                             <p className="text-gray-600">Upload your CV and provide your professional background.</p>
                         </CardHeader>
                         <CardContent className="space-y-6">
+
                             {/* CV Upload Section */}
                             <div>
                                 <Label className="text-sm font-medium text-gray-700">
@@ -1364,8 +1410,7 @@ export default function RegisterPage() {
                                                         <span className="text-sm font-medium text-gray-700">Period:</span>{" "}
                                                         <span className="text-sm">
                                                             {format(exp.startDate!, "MMM yyyy")} -{" "}
-                                                            {exp.currentlyWorking ? "Present" : format(exp.endDate!, "MMM yyyy")}
-                                                        </span>
+                                                            {exp.currentlyWorking ? "Present" : exp.endDate && !isNaN(new Date(exp.endDate).getTime()) ? format(new Date(exp.endDate), "MMM yyyy") : "Present"}                                                        </span>
                                                     </div>
                                                 </div>
                                                 <div className="mt-2">
@@ -1560,8 +1605,7 @@ export default function RegisterPage() {
                                                         <span className="text-sm font-medium text-gray-700">Period:</span>{" "}
                                                         <span className="text-sm">
                                                             {format(exp.startDate!, "MMM yyyy")} -{" "}
-                                                            {exp.currentlyStudying ? "Present" : format(exp.endDate!, "MMM yyyy")}
-                                                        </span>
+                                                            {exp.currentlyStudying ? "Present" : exp.endDate && !isNaN(new Date(exp.endDate).getTime()) ? format(new Date(exp.endDate), "MMM yyyy") : "Present"}                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>

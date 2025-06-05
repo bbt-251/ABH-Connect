@@ -22,7 +22,6 @@ export default function AuthPage() {
     const { error, login } = useLogin();
     const { showToast } = useToast();
     const { userData, authLoading } = useAuth();
-    // console.log("userData: ", userData, user);
 
     useEffect(() => {
         if (userData && !authLoading) {
