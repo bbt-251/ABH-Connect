@@ -754,7 +754,7 @@ export default function RegisterPage() {
                             if (!exp.companyName.trim()) errors.push(`Professional Experience ${index + 1}: Company Name is required`);
                             if (!exp.title.trim()) errors.push(`Professional Experience ${index + 1}: Title is required`);
                             if (!exp.startDate) errors.push(`Professional Experience ${index + 1}: Start Date is required`);
-                            if (!exp.currentlyWorking && !exp.endDate) {
+                            if (!exp.currentlyWorking && (!exp.endDate || isNaN(new Date(exp.endDate).getTime()))) {
                                 errors.push(`Professional Experience ${index + 1}: End Date is required if not currently working`);
                             }
                             if (!exp.mainActivities.trim()) errors.push(`Professional Experience ${index + 1}: Main Activities are required`);
@@ -766,8 +766,8 @@ export default function RegisterPage() {
                     } else {
                         applicantData.educationExperiences.forEach((exp, index) => {
                             if (!exp.startDate) errors.push(`Educational Experience ${index + 1}: Start Date is required`);
-                            if (!exp.currentlyStudying && !exp.endDate) {
-                                errors.push(`Educational Experience ${index + 1}: End Date is required if not currently studying`);
+                            if (!exp.currentlyStudying && (!exp.endDate || isNaN(new Date(exp.endDate).getTime()))) {
+                                errors.push(`Professional Experience ${index + 1}: End Date is required if not currently working`);
                             }
                             if (!exp.educationLevel) errors.push(`Educational Experience ${index + 1}: Education Level is required`);
                             if (!exp.title.trim()) errors.push(`Educational Experience ${index + 1}: Title is required`);
