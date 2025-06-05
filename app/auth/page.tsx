@@ -50,7 +50,10 @@ export default function AuthPage() {
 
                 showToast(`Welcome back, ${name}!`, "Logged In!", "success");
                 // router.push("/dashboard"); // Redirect to dashboard or another page
-            } else if (error) {
+            } else if (loggedInUser === null) {
+                showToast("Account doesn't exist!", "Oops!", "warning");
+            }
+            else if (error) {
                 showToast(error, "Error", "error");
             }
         } catch (err) {
