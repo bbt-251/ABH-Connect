@@ -1,33 +1,33 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/context/toastContext"
+import { useRegister } from "@/hooks/auth/useRegister"
+import { dateFormat } from "@/lib/api/dayjs_format"
+import { uploadBusinessLicense } from "@/lib/api/firebase/upload/uploadBusinessDocuments"
+import { uploadCompanyLogo } from "@/lib/api/firebase/upload/uploadCompanyLogo"
+import { uploadCV } from "@/lib/api/firebase/upload/uploadCV"
+import { uploadApplicantPhoto } from "@/lib/api/firebase/upload/uploadPhoto"
+import { cn } from "@/lib/utils"
+import ApplicantModel from "@/models/applicant"
+import CompanyModel from "@/models/company"
+import { format } from "date-fns"
+import dayjs from "dayjs"
+import { AlertCircle, Briefcase, Building, CalendarIcon, Check, ChevronLeft, Edit2, Plus, Shield, Trash2, User, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, User, Briefcase, Building, Shield, Check, CalendarIcon, X, Plus, AlertCircle, Trash2 } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import CompanyModel from "@/models/company"
-import { useRegister } from "@/hooks/auth/useRegister"
-import { uploadBusinessLicense } from "@/lib/api/firebase/upload/uploadBusinessDocuments"
-import { uploadCompanyLogo } from "@/lib/api/firebase/upload/uploadCompanyLogo"
-import { useToast } from "@/context/toastContext"
-import ApplicantModel from "@/models/applicant"
-import dayjs from "dayjs"
-import { dateFormat } from "@/lib/api/dayjs_format"
-import { uploadCV } from "@/lib/api/firebase/upload/uploadCV"
-import { uploadApplicantPhoto } from "@/lib/api/firebase/upload/uploadPhoto"
+import { useEffect, useState } from "react"
 
 // Interfaces
 interface ProfessionalExperience {
@@ -933,6 +933,37 @@ export default function RegisterPage() {
         }
     }
 
+    const handleEditProfessionalExperience = (id: string) => {
+        const experience = applicantData.professionalExperiences.find((exp) => exp.id === id)
+        if (experience) {
+            setNewProfessionalExperience({
+                companyName: experience.companyName,
+                title: experience.title,
+                startDate: experience.startDate,
+                endDate: experience.endDate ? new Date(experience.endDate) : undefined,
+                currentlyWorking: !!experience.currentlyWorking,
+                mainActivities: experience.mainActivities,
+                reference: experience.reference || "",
+            })
+            removeProfessionalExperience(id)
+        }
+    }
+
+    const handleEditEducationalExperience = (id: string) => {
+        const experience = applicantData.educationExperiences.find((exp) => exp.id === id)
+        if (experience) {
+            setNewEducationExperience({
+                startDate: experience.startDate,
+                endDate: experience.endDate ? new Date(experience.endDate) : undefined,
+                currentlyStudying: !!experience.currentlyStudying,
+                educationLevel: experience.educationLevel,
+                title: experience.title,
+                school: experience.school,
+            })
+            removeEducationExperience(id)
+        }
+    }
+
     const renderApplicantStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -1379,12 +1410,20 @@ export default function RegisterPage() {
                                     <div className="space-y-4 mb-6">
                                         {applicantData.professionalExperiences.map((exp) => (
                                             <div key={exp.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                                <button
-                                                    onClick={() => removeProfessionalExperience(exp.id)}
-                                                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="absolute top-2 right-2 gap-2 flex">
+                                                    <button
+                                                        onClick={() => handleEditProfessionalExperience(exp.id)}
+                                                        className="text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => removeProfessionalExperience(exp.id)}
+                                                        className="text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                                                     <div>
                                                         <span className="text-sm font-medium text-gray-700">Company:</span>{" "}
@@ -1570,12 +1609,20 @@ export default function RegisterPage() {
                                     <div className="space-y-4 mb-6">
                                         {applicantData.educationExperiences.map((exp) => (
                                             <div key={exp.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-                                                <button
-                                                    onClick={() => removeEducationExperience(exp.id)}
-                                                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="absolute top-2 right-2 gap-2 flex">
+                                                    <button
+                                                        onClick={() => handleEditEducationalExperience(exp.id)}
+                                                        className="text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => removeEducationExperience(exp.id)}
+                                                        className="text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                                                     <div>
                                                         <span className="text-sm font-medium text-gray-700">School:</span>{" "}
