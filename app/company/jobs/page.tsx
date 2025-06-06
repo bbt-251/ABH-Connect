@@ -133,6 +133,8 @@ export default function JobPostingPage() {
     type: "",
     salary: "",
     deadline: "",
+    education: "",
+    experience: "",
     description: "",
   })
 
@@ -155,6 +157,8 @@ export default function JobPostingPage() {
       type: "",
       salary: "",
       deadline: "",
+      education: "",
+      experience: "",
       description: "",
     })
   }
@@ -274,6 +278,45 @@ export default function JobPostingPage() {
                     value={newJob.deadline}
                     onChange={(e) => setNewJob({ ...newJob, deadline: e.target.value })}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="education">Level of Education *</Label>
+                  <Select
+                    value={newJob.education}
+                    onValueChange={(value) => setNewJob({ ...newJob, education: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select education level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high-school">High School</SelectItem>
+                      <SelectItem value="associate">Associate Degree</SelectItem>
+                      <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
+                      <SelectItem value="master">Master's Degree</SelectItem>
+                      <SelectItem value="phd">PhD/Doctorate</SelectItem>
+                      <SelectItem value="professional">Professional Certification</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="experience">Years of Experience *</Label>
+                  <Select
+                    value={newJob.experience}
+                    onValueChange={(value) => setNewJob({ ...newJob, experience: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select experience level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0-1">0-1 years</SelectItem>
+                      <SelectItem value="2-3">2-3 years</SelectItem>
+                      <SelectItem value="4-5">4-5 years</SelectItem>
+                      <SelectItem value="6-8">6-8 years</SelectItem>
+                      <SelectItem value="9-12">9-12 years</SelectItem>
+                      <SelectItem value="13+">13+ years</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>
@@ -477,8 +520,16 @@ export default function JobPostingPage() {
                   </div>
                   <div
                     contentEditable
-                    className="min-h-[200px] p-4 focus:outline-none focus:ring-2 focus:ring-[#d2f277] focus:ring-offset-2 prose prose-sm max-w-none"
-                    style={{ minHeight: "200px" }}
+                    lang="en"
+                    dir="ltr"
+                    className="min-h-[200px] p-4 focus:outline-none focus:ring-2 focus:ring-[#d2f277] focus:ring-offset-2 prose prose-sm max-w-none text-left"
+                    style={{
+                      minHeight: "200px",
+                      direction: "ltr",
+                      textAlign: "left",
+                      unicodeBidi: "bidi-override",
+                      writingMode: "horizontal-tb",
+                    }}
                     onInput={(e) => {
                       const target = e.target as HTMLDivElement
                       setNewJob({ ...newJob, description: target.innerHTML })
