@@ -10,7 +10,7 @@ export default interface ApplicantModel {
     yearsOfExperience: string;
     email: string;
     phoneCountryCode: string;
-    phoneNumber: string | null;
+    phoneNumber: string;
     faydaNumber: string | null;
     tinNumber: string | null;
 
@@ -33,7 +33,7 @@ export default interface ApplicantModel {
     photo: string | null;
 }
 
-interface ProfessionalExperience {
+export interface ProfessionalExperience {
     id: string;
     companyName: string;
     title: string;
@@ -44,7 +44,7 @@ interface ProfessionalExperience {
     reference: string;
 }
 
-interface EducationExperience {
+export interface EducationExperience {
     id: string;
     startDate: string;
     endDate: string | null;

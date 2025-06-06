@@ -135,7 +135,7 @@ const companySteps = [
 ]
 
 // Reference data
-const educationLevels = [
+export const educationLevels = [
     "Primary Education",
     "Secondary Education",
     "Certificate",
@@ -147,7 +147,7 @@ const educationLevels = [
     "Other",
 ]
 
-const experienceYears = [
+export const experienceYears = [
     "Fresh Graduate (0 years)",
     "1-2 years",
     "3-5 years",
@@ -157,7 +157,7 @@ const experienceYears = [
     "20+ years",
 ]
 
-const countryCodes = [
+export const countryCodes = [
     { code: "+93", country: "Afghanistan", flag: "🇦🇫", length: 9 },
     { code: "+355", country: "Albania", flag: "🇦🇱", length: 9 },
     { code: "+213", country: "Algeria", flag: "🇩🇿", length: 9 },

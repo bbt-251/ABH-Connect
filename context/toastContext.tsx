@@ -49,6 +49,7 @@ export const ToastProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ 
     const hideToast = () => {
         setToastOpen(false);
         clearTimeout(timerRef.current); // Clear any active timers
+        setDuration(2500); // Reset duration to default
     };
 
     return (
