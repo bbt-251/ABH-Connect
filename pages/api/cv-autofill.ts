@@ -43,10 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const prompt = `
 interface ProfessionalExperienceModel {
-  company: string;
+  companyName: string;
   title: string;
   startDate: string; // Must be MMMM DD, YYYY
   endDate: string; // Must be MMMM DD, YYYY
+  currentlyWorking: boolean;
   mainActivities: string;
   reference: string | null;
 }
@@ -54,10 +55,13 @@ interface ProfessionalExperienceModel {
 interface EducationalExperienceModel {
   startDate: string; // Must be MMMM DD, YYYY
   endDate: string; // Must be MMMM DD, YYYY
-  educationalLevel: string;
+  currentlyStudying: boolean;
+  educationLevel: string;
   title: string;
   school: string;
 }
+
+NB: if the endDate is not specified or it is an empty string or matches the value "present" or "Present", the endDate field must be set to null and currentlyWorking/currentlyStudying must be true. otherwise currentlyWorking/currentlyStudying field is false and the endDate is formatted as MMMM DD, YYYY
 
 From the CV content below I want you to give me:
 {

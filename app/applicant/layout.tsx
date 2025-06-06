@@ -180,7 +180,7 @@ export default function ApplicantLayout({
                     <div className="p-4 border-t border-gray-200 flex-shrink-0">
                         <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src={userData?.applicant?.photo || "/placeholder.svg?height=40&width=40"} />
+                                <AvatarImage src={`${userData?.applicant?.photo}`} />
                                 <AvatarFallback>
                                     {userData?.applicant?.firstName
                                         ? userData.applicant.firstName.charAt(0).toUpperCase()
@@ -224,7 +224,7 @@ export default function ApplicantLayout({
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={userData?.applicant?.photo || "/placeholder.svg?height=40&width=40"} />
+                                                <AvatarImage src={`${userData?.applicant?.photo}`} />
                                                 <AvatarFallback>
                                                     {userData?.applicant?.firstName
                                                         ? userData.applicant.firstName.charAt(0).toUpperCase()

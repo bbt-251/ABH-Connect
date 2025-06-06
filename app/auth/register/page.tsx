@@ -508,14 +508,8 @@ export default function RegisterPage() {
                             ...applicantData.professionalExperiences,
                             ...professionalExperience.map(exp => ({
                                 ...exp,
-                                companyName: exp.company,
                                 startDate: new Date(exp.startDate),
-                                endDate: exp.endDate.toLowerCase() === "present"
-                                    ? undefined // Set to undefined for "present"
-                                    : !isNaN(new Date(exp.endDate).getTime())
-                                        ? new Date(exp.endDate)
-                                        : undefined,
-                                currentlyWorking: exp.endDate === "" ? true : false,
+                                endDate: exp.endDate ? new Date(exp.endDate) : undefined,
                                 id: Date.now().toString() + Math.random().toString(36).substring(2, 15), // Generate a unique ID
                             })),
                         ];
@@ -524,14 +518,8 @@ export default function RegisterPage() {
                             ...applicantData.educationExperiences,
                             ...educationalExperience.map(exp => ({
                                 ...exp,
-                                educationLevel: exp.educationalLevel,
                                 startDate: new Date(exp.startDate),
-                                endDate: exp.endDate.toLowerCase() === "present"
-                                    ? undefined // Set to undefined for "present"
-                                    : !isNaN(new Date(exp.endDate).getTime())
-                                        ? new Date(exp.endDate)
-                                        : undefined,
-                                currentlyStudying: exp.endDate === "" ? true : false,
+                                endDate: exp.endDate ? new Date(exp.endDate) : undefined,
                                 id: Date.now().toString() + Math.random().toString(36).substring(2, 15), // Generate a unique ID
                             })),
                         ];
@@ -1397,7 +1385,7 @@ export default function RegisterPage() {
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                                                     <div>
                                                         <span className="text-sm font-medium text-gray-700">Company:</span>{" "}
                                                         <span className="text-sm">{exp.companyName}</span>
@@ -1588,7 +1576,7 @@ export default function RegisterPage() {
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                                                     <div>
                                                         <span className="text-sm font-medium text-gray-700">School:</span>{" "}
                                                         <span className="text-sm">{exp.school}</span>
