@@ -420,27 +420,13 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                         <span className="text-sm text-gray-600">Select</span>
                       </div>
                       <h3 className="font-medium text-gray-900 truncate">{applicant.name}</h3>
-                      <p className="text-sm text-gray-500">{applicant.location}</p>
+                      {/* Remove: <p className="text-sm text-gray-500">{applicant.location}</p> */}
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant="outline"
-                          className={applicant.employmentType === "Full Time" ? "text-green-600" : "text-orange-600"}
-                        >
-                          {applicant.employmentType}
+                        <Badge variant="outline" className="text-blue-600">
+                          {applicant.educationLevel}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className={
-                            applicant.matchingScore >= 90
-                              ? "text-green-600"
-                              : applicant.matchingScore >= 80
-                                ? "text-blue-600"
-                                : applicant.matchingScore >= 70
-                                  ? "text-orange-600"
-                                  : "text-red-600"
-                          }
-                        >
-                          {applicant.matchingScore}% Match
+                        <Badge variant="outline" className="text-green-600">
+                          {applicant.experienceYears} years
                         </Badge>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">{applicant.appliedDate}</p>

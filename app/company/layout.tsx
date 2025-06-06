@@ -46,7 +46,7 @@ const navigationItems = [
     premium: false,
   },
   {
-    name: "Pre-screening tools",
+    name: "Applicant Evaluation",
     href: "/company/prescreening",
     icon: ClipboardCheck,
     premium: false,
@@ -201,8 +201,10 @@ export default function CompanyLayout({
 
           {/* Company Profile Section */}
           <div className="p-4 border-t border-gray-200 flex-shrink-0">
-            <div
-              className={`flex items-center gap-3 p-3 rounded-lg bg-gray-50 ${isNavCollapsed ? "justify-center" : ""}`}
+            <Link
+              href="/company/profile"
+              className={`flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors ${isNavCollapsed ? "justify-center" : ""}`}
+              title="View and edit company profile"
             >
               <Avatar className="w-10 h-10 flex-shrink-0">
                 <AvatarImage src="/placeholder.svg?height=40&width=40" />
@@ -216,7 +218,8 @@ export default function CompanyLayout({
                 <p className="text-sm font-medium text-gray-900 truncate">TechCorp Inc.</p>
                 <p className="text-xs text-gray-500 truncate">Premium Plan</p>
               </div>
-            </div>
+              {!isNavCollapsed && <Settings className="w-4 h-4 text-gray-400 hover:text-gray-600" />}
+            </Link>
           </div>
         </div>
       </div>

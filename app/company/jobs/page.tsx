@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import {
   Dialog,
   DialogContent,
@@ -161,8 +160,27 @@ export default function JobPostingPage() {
   }
 
   const handleJobAction = (action: string, jobId: number) => {
-    console.log(`${action} for job ${jobId}`)
-    // Handle different actions here
+    switch (action) {
+      case "announce":
+        alert(`Announcing job posting ${jobId}`)
+        break
+      case "withdraw":
+        alert(`Withdrawing job posting ${jobId}`)
+        break
+      case "invite-evaluators":
+        alert(`Inviting evaluators for job ${jobId}`)
+        break
+      case "view-evaluators-form":
+        alert(`Viewing evaluators form for job ${jobId}`)
+        break
+      case "terminate":
+        if (confirm(`Are you sure you want to terminate the process for job ${jobId}?`)) {
+          alert(`Terminating process for job ${jobId}`)
+        }
+        break
+      default:
+        console.log(`${action} for job ${jobId}`)
+    }
   }
 
   return (
@@ -596,7 +614,7 @@ export default function JobPostingPage() {
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleJobAction("announce", job.id)}>
                       <Megaphone className="w-4 h-4 mr-2" />
                       Announce Job Posting
@@ -613,11 +631,7 @@ export default function JobPostingPage() {
                       <FileText className="w-4 h-4 mr-2" />
                       View Evaluators Form
                     </DropdownMenuItem>
-                    <Separator />
-                    <DropdownMenuItem
-                      onClick={() => handleJobAction("terminate", job.id)}
-                      className="text-red-600 focus:text-red-600"
-                    >
+                    <DropdownMenuItem onClick={() => handleJobAction("terminate", job.id)} className="text-red-600">
                       <XCircle className="w-4 h-4 mr-2" />
                       Terminate Process
                     </DropdownMenuItem>
