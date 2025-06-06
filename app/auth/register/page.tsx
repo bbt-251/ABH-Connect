@@ -325,6 +325,8 @@ const countryCodes = [
     { code: "+263", country: "Zimbabwe", flag: "🇿🇼", length: 9 },
 ]
 
+const countries = countryCodes.map(c => c.country);
+
 const companyTypes = [
     "Private Limited Company",
     "Public Limited Company",
@@ -346,18 +348,6 @@ const companySizes = [
     "1000+ employees",
 ]
 
-const countries = [
-    "Tanzania",
-    "Kenya",
-    "Uganda",
-    "Rwanda",
-    "Burundi",
-    "United States",
-    "United Kingdom",
-    "Canada",
-    "Other",
-]
-
 export default function RegisterPage() {
     const searchParams = useSearchParams()
     const router = useRouter() // Add this line to get the router
@@ -376,7 +366,7 @@ export default function RegisterPage() {
     const [cvFile, setCvFile] = useState<File | null>(null);
 
     const { register } = useRegister()
-    const { showToast } = useToast();
+    const { showToast, hideToast } = useToast();
 
     const steps = userType === "applicant" ? applicantSteps : companySteps
 
@@ -433,12 +423,12 @@ export default function RegisterPage() {
         country: "",
         cityLocation: "",
         officialEmail: "",
-        officialPhoneCountryCode: "+255",
+        officialPhoneCountryCode: "+251",
         officialPhone: "",
         websiteUrl: "",
         fullName: "",
         adminEmail: "",
-        adminPhoneCountryCode: "+255",
+        adminPhoneCountryCode: "+251",
         adminPhone: "",
         password: "",
         confirmPassword: "",
@@ -478,7 +468,7 @@ export default function RegisterPage() {
     useEffect(() => {
         if (cvFile) {
             const callCVAutofillAPI = async () => {
-                showToast("Please wait while we process your CV...", "Info", "default");
+                showToast("Please wait while we process your CV...", "Info", "default", 400000);
 
                 const formData = new FormData();
                 formData.append("file", cvFile);
@@ -531,6 +521,8 @@ export default function RegisterPage() {
                 } catch (err) {
                     console.error("Fetch error:", err);
                 }
+
+                hideToast();
             };
 
             callCVAutofillAPI();
@@ -855,16 +847,23 @@ export default function RegisterPage() {
                 // create company
                 await register({ email: companyProfile.email, password: companyData.password, company: companyProfile })
                     .then(async (c) => {
-                        // upload files 
-                        if (businessLicenseFile) {
-                            await uploadBusinessLicense(c.id, businessLicenseFile)
-                        }
-                        if (companyLogoFile) {
-                            await uploadCompanyLogo(c.id, companyLogoFile)
-                        }
+                        console.log("registered company: ", c)
+                        if (c && c.id) {
+                            // upload files 
+                            if (businessLicenseFile) {
+                                await uploadBusinessLicense(c.id, businessLicenseFile)
+                            }
+                            if (companyLogoFile) {
+                                await uploadCompanyLogo(c.id, companyLogoFile)
+                            }
 
-                        showToast("Registration successful!", "Success", "success");
-                        router.push("/auth")
+                            showToast("Registration successful!", "Success", "success");
+                            router.push("/auth")
+                        }
+                        else {
+                            console.error("registration failed or registration was successful and file upload failed");
+                            showToast("Registration failed. Please try again.", "Error", "error");
+                        }
                     });
             }
 
@@ -908,16 +907,23 @@ export default function RegisterPage() {
                 // create applicant
                 await register({ email: applicantProfile.email, password: applicantData.password, applicant: applicantProfile })
                     .then(async (a) => {
-                        // upload files 
-                        if (cvFile) {
-                            await uploadCV(a.id, cvFile)
+                        console.log("registered applicant: ", a);
+                        if (a && a.id) {
+                            // upload files 
+                            if (cvFile) {
+                                await uploadCV(a.id, cvFile)
+                            }
+                            if (applicantPhotoFile) {
+                                await uploadApplicantPhoto(a.id, applicantPhotoFile)
+                            }
+                            showToast("Registration successful!", "Success", "success");
+                            router.push("/auth")
                         }
-                        if (applicantPhotoFile) {
-                            await uploadApplicantPhoto(a.id, applicantPhotoFile)
+                        else {
+                            console.error("registration failed or registration was successful and file upload failed");
+                            showToast("Registration failed. Please try again.", "Error", "error");
                         }
 
-                        showToast("Registration successful!", "Success", "success");
-                        router.push("/auth")
                     });
                 setLoading(false)
             }
