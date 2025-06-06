@@ -54,6 +54,7 @@ export default function AuthPage() {
                 let name = "";
                 if (company) {
                     name = company.fullName;
+                    router.push("/company"); // Redirect to /applicant
                 }
                 if (applicant) {
                     name = `${applicant.firstName} ${applicant.surname}`;
