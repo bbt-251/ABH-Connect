@@ -421,12 +421,13 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                       </div>
                       <h3 className="font-medium text-gray-900 truncate">{applicant.name}</h3>
                       {/* Remove: <p className="text-sm text-gray-500">{applicant.location}</p> */}
+                      {/* badges */}
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-blue-600">
-                          {applicant.educationLevel}
-                        </Badge>
                         <Badge variant="outline" className="text-green-600">
-                          {applicant.experienceYears} years
+                          {applicant.matchingScore}% match
+                        </Badge>
+                        <Badge variant="outline" className="text-blue-600">
+                          {applicant.screeningScore}% screen
                         </Badge>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">{applicant.appliedDate}</p>
@@ -447,7 +448,8 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                 <div className="lg:col-span-3">
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-start gap-6 mb-6">
+                      {/* 1st Section: Personal Info */}
+                      <div className="flex items-start gap-6 mb-6 pb-6 border-b border-gray-200">
                         <Avatar className="w-24 h-24">
                           <AvatarImage src={selectedApplicant.avatar || "/placeholder.svg"} />
                           <AvatarFallback className="text-2xl">
@@ -460,22 +462,13 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h1 className="text-2xl font-bold text-gray-900 mb-2">{selectedApplicant.name}</h1>
-                              <p className="text-gray-600 leading-relaxed mb-4">{selectedApplicant.bio}</p>
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-gray-500">Portfolio</span>
-                                  <a
-                                    href={selectedApplicant.portfolio}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                                  >
-                                    {selectedApplicant.portfolio}
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                </div>
-                              </div>
+                              <h1 className="text-2xl font-bold text-gray-900 mb-1">{selectedApplicant.name}</h1>
+                              <p className="text-sm text-gray-600 mb-1">
+                                <span className="font-medium">Phone:</span> {selectedApplicant.phone}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Email:</span> {selectedApplicant.email}
+                              </p>
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -529,82 +522,159 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Rate</h3>
-                          <p className="text-lg font-semibold">
-                            {selectedApplicant.rate}{" "}
-                            <span className="text-sm text-gray-500">— {selectedApplicant.rateType}</span>
-                          </p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Seniority level</h3>
-                          <p className="text-lg font-semibold">{selectedApplicant.seniorityLevel}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Phone</h3>
-                          <p className="text-gray-600">{selectedApplicant.phone}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Email</h3>
-                          <p className="text-gray-600">{selectedApplicant.email}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Desired Commitment</h3>
-                          <p className="text-gray-600">{selectedApplicant.desiredCommitment}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Location</h3>
-                          <p className="text-gray-600">{selectedApplicant.location}</p>
+                      {/* 2nd Section: Experience Summary */}
+                      <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="font-medium text-gray-900 mb-3">Experience Summary</h3>
+                        <p className="text-gray-600 leading-relaxed">{selectedApplicant.bio}</p>
+                        <div className="mt-3">
+                          <a
+                            href={selectedApplicant.portfolio}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                          >
+                            Portfolio: {selectedApplicant.portfolio}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       </div>
 
-                      <div className="mb-6">
-                        <h3 className="font-medium text-gray-900 mb-2">Skills</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedApplicant.skills.map((skill, index) => (
-                            <Badge key={index} variant="secondary">
-                              {skill}
+                      {/* 3rd Section: Key Data */}
+                      <div className="grid grid-cols-4 gap-6 mb-6 pb-6 border-b border-gray-200">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium text-gray-900 mb-1">Matching Score</h3>
+                          <p className="text-2xl font-bold text-green-600">{selectedApplicant.matchingScore}%</p>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium text-gray-900 mb-1">Screening Score</h3>
+                          <p className="text-2xl font-bold text-blue-600">{selectedApplicant.screeningScore}%</p>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium text-gray-900 mb-1">Education</h3>
+                          <p className="text-lg font-semibold">{selectedApplicant.educationLevel}</p>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium text-gray-900 mb-1">Experience</h3>
+                          <p className="text-lg font-semibold">{selectedApplicant.experienceYears} years</p>
+                        </div>
+                      </div>
+
+                      {/* 4th Section: Work Experience Details */}
+                      <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="font-medium text-gray-900 mb-3">Work Experience</h3>
+                        <div className="space-y-4">
+                          <div className="p-4 border border-gray-200 rounded-lg">
+                            <div className="flex justify-between">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">Senior Product Designer</h4>
+                                <p className="text-gray-600">TechCorp Inc.</p>
+                              </div>
+                              <div className="text-sm text-gray-500">Mar 2020 - Jan 2024</div>
+                            </div>
+                            <div className="mt-3">
+                              <p className="text-sm text-gray-700 whitespace-pre-line">
+                                • Led development of customer-facing web applications using React and Node.js •
+                                Collaborated with cross-functional teams to deliver features on time • Mentored 3 junior
+                                developers and conducted code reviews • Implemented CI/CD pipelines reducing deployment
+                                time by 60% • Optimized application performance resulting in 40% faster load times
+                              </p>
+                            </div>
+                            <div className="mt-3 text-sm">
+                              <span className="font-medium">Reference:</span> Jane Smith - Engineering Manager -
+                              jane.smith@techcorp.com
+                            </div>
+                          </div>
+                          <div className="p-4 border border-gray-200 rounded-lg">
+                            <div className="flex justify-between">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{selectedApplicant.desiredJobTitle}</h4>
+                                <p className="text-gray-600">Previous Company</p>
+                              </div>
+                              <div className="text-sm text-gray-500">Jan 2018 - Feb 2020</div>
+                            </div>
+                            <div className="mt-3">
+                              <p className="text-sm text-gray-700">
+                                Previous work experience details would be displayed here.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 5th Section: Education Experience Details */}
+                      <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="font-medium text-gray-900 mb-3">Education</h3>
+                        <div className="space-y-4">
+                          <div className="p-4 border border-gray-200 rounded-lg">
+                            <div className="flex justify-between">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">Bachelor of Science in Computer Science</h4>
+                                <p className="text-gray-600">University of California, Berkeley</p>
+                              </div>
+                              <div className="text-sm text-gray-500">Sep 2014 - May 2018</div>
+                            </div>
+                            <div className="mt-2">
+                              <Badge variant="outline">{selectedApplicant.educationLevel}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 6th Section: Skills, Languages and Certifications */}
+                      <div>
+                        <div className="mb-6">
+                          <h3 className="font-medium text-gray-900 mb-3">Skills</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedApplicant.skills.map((skill, index) => (
+                              <Badge key={index} variant="secondary">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mb-6">
+                          <h3 className="font-medium text-gray-900 mb-3">Languages</h3>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="text-blue-600">
+                              English (Fluent)
                             </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="mb-6">
-                        <h3 className="font-medium text-gray-900 mb-2">Matching Criteria</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedApplicant.matchingCriteria.map((criteria, index) => (
-                            <Badge key={index} variant="outline" className="text-green-600">
-                              {criteria}
+                            <Badge variant="outline" className="text-blue-600">
+                              Spanish (Intermediate)
                             </Badge>
-                          ))}
+                            <Badge variant="outline" className="text-blue-600">
+                              French (Basic)
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Years Experience</h3>
-                          <p className="text-gray-600">{selectedApplicant.yearsExperience}</p>
+                        <div className="mb-6">
+                          <h3 className="font-medium text-gray-900 mb-3">Certifications</h3>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                              <div>
+                                <p className="font-medium">AWS Certified Solutions Architect</p>
+                                <p className="text-sm text-gray-500">Amazon Web Services • Expires Dec 2024</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                              <div>
+                                <p className="font-medium">React Developer Certification</p>
+                                <p className="text-sm text-gray-500">Meta • Issued Jan 2023</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Desired Job Title</h3>
-                          <p className="text-gray-600">{selectedApplicant.desiredJobTitle}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Matching Score</h3>
-                          <p className="text-lg font-semibold text-green-600">{selectedApplicant.matchingScore}%</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Screening Score</h3>
-                          <p className="text-lg font-semibold text-blue-600">{selectedApplicant.screeningScore}%</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Education Level</h3>
-                          <p className="text-gray-600">{selectedApplicant.educationLevel}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-2">Experience Years</h3>
-                          <p className="text-gray-600">{selectedApplicant.experienceYears} years</p>
+
+                        <div className="mb-6">
+                          <h3 className="font-medium text-gray-900 mb-3">Matching Criteria</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedApplicant.matchingCriteria.map((criteria, index) => (
+                              <Badge key={index} variant="outline" className="text-green-600">
+                                {criteria}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </CardContent>

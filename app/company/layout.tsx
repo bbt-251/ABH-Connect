@@ -110,7 +110,11 @@ export default function CompanyLayout({
                 width={32}
                 height={32}
               />
-              <span className="text-lg font-bold text-[#0a3141]">ABH Connect</span>
+              <span
+                className={`text-lg font-bold text-[#0a3141] transition-all duration-200 ${isNavCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}`}
+              >
+                ABH Connect
+              </span>
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 rounded-md hover:bg-gray-100">
               <X className="w-5 h-5" />

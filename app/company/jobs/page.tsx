@@ -131,7 +131,8 @@ export default function JobPostingPage() {
     department: "",
     location: "",
     type: "",
-    salary: "",
+    minSalary: "",
+    maxSalary: "",
     deadline: "",
     education: "",
     experience: "",
@@ -155,7 +156,8 @@ export default function JobPostingPage() {
       department: "",
       location: "",
       type: "",
-      salary: "",
+      minSalary: "",
+      maxSalary: "",
       deadline: "",
       education: "",
       experience: "",
@@ -263,12 +265,32 @@ export default function JobPostingPage() {
                 </div>
                 <div>
                   <Label htmlFor="salary">Salary Range</Label>
-                  <Input
-                    id="salary"
-                    placeholder="e.g. $80k - $120k"
-                    value={newJob.salary}
-                    onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
-                  />
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <Input
+                        id="minSalary"
+                        type="number"
+                        placeholder="Min"
+                        className="pl-7"
+                        value={newJob.minSalary}
+                        onChange={(e) => setNewJob({ ...newJob, minSalary: e.target.value })}
+                      />
+                    </div>
+                    <span className="text-gray-500">-</span>
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <Input
+                        id="maxSalary"
+                        type="number"
+                        placeholder="Max"
+                        className="pl-7"
+                        value={newJob.maxSalary}
+                        onChange={(e) => setNewJob({ ...newJob, maxSalary: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Enter values in thousands (e.g., 80 for $80,000)</p>
                 </div>
                 <div>
                   <Label htmlFor="deadline">Application Deadline</Label>
@@ -562,13 +584,13 @@ export default function JobPostingPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
               {jobPostings.filter((job) => job.status === "Active").length}
             </div>
-            <div className="text-sm text-gray-500">Active Jobs</div>
+            <div className="text-sm text-gray-500">Announced Job Posting</div>
           </CardContent>
         </Card>
         <Card>
@@ -576,7 +598,7 @@ export default function JobPostingPage() {
             <div className="text-2xl font-bold text-gray-600">
               {jobPostings.filter((job) => job.status === "Draft").length}
             </div>
-            <div className="text-sm text-gray-500">Draft Jobs</div>
+            <div className="text-sm text-gray-500">Withdrawn Job Posting</div>
           </CardContent>
         </Card>
         <Card>
@@ -585,14 +607,6 @@ export default function JobPostingPage() {
               {jobPostings.reduce((sum, job) => sum + job.applicants, 0)}
             </div>
             <div className="text-sm text-gray-500">Total Applicants</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {jobPostings.filter((job) => job.status === "Closed").length}
-            </div>
-            <div className="text-sm text-gray-500">Closed Jobs</div>
           </CardContent>
         </Card>
       </div>
