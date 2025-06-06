@@ -1,25 +1,42 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, User, Briefcase, Building, Shield, Check, CalendarIcon, X, Plus, AlertCircle } from "lucide-react"
+import { User, Briefcase, Building, Shield, CalendarIcon, Plus, Trash2, X } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 // Interfaces
+interface ProfessionalExperience {
+  id: string
+  companyName: string
+  title: string
+  startDate: Date | undefined
+  endDate: Date | undefined
+  currentlyWorking: boolean
+  mainActivities: string
+  reference: string
+}
+
+interface EducationExperience {
+  id: string
+  startDate: Date | undefined
+  endDate: Date | undefined
+  currentlyStudying: boolean
+  educationLevel: string
+  title: string
+  school: string
+}
+
 interface ApplicantRegistrationData {
   // Personal Information
   firstName: string
@@ -34,12 +51,14 @@ interface ApplicantRegistrationData {
   email: string
   faydaNumber: string
   tinNumber: string
+  password: string
+  confirmPassword: string
 
   // Professional Experience
-  currentPosition: string
-  currentCompany: string
-  currentSalary: string
+  desiredPosition: string
   expectedSalary: string
+  professionalExperiences: ProfessionalExperience[]
+  educationExperiences: EducationExperience[]
   skills: string[]
   languages: string[]
   certifications: string[]
@@ -125,14 +144,171 @@ const experienceYears = [
 ]
 
 const countryCodes = [
-  { code: "+255", country: "Tanzania", flag: "🇹🇿", length: 9 },
-  { code: "+254", country: "Kenya", flag: "🇰🇪", length: 9 },
-  { code: "+256", country: "Uganda", flag: "🇺🇬", length: 9 },
-  { code: "+250", country: "Rwanda", flag: "🇷🇼", length: 9 },
-  { code: "+257", country: "Burundi", flag: "🇧🇮", length: 8 },
+  { code: "+93", country: "Afghanistan", flag: "🇦🇫", length: 9 },
+  { code: "+355", country: "Albania", flag: "🇦🇱", length: 9 },
+  { code: "+213", country: "Algeria", flag: "🇩🇿", length: 9 },
   { code: "+1", country: "United States", flag: "🇺🇸", length: 10 },
-  { code: "+44", country: "United Kingdom", flag: "🇬🇧", length: 10 },
+  { code: "+376", country: "Andorra", flag: "🇦🇩", length: 6 },
+  { code: "+244", country: "Angola", flag: "🇦🇴", length: 9 },
+  { code: "+54", country: "Argentina", flag: "🇦🇷", length: 10 },
+  { code: "+374", country: "Armenia", flag: "🇦🇲", length: 8 },
+  { code: "+61", country: "Australia", flag: "🇦🇺", length: 9 },
+  { code: "+43", country: "Austria", flag: "🇦🇹", length: 10 },
+  { code: "+994", country: "Azerbaijan", flag: "🇦🇿", length: 9 },
+  { code: "+973", country: "Bahrain", flag: "🇧🇭", length: 8 },
+  { code: "+880", country: "Bangladesh", flag: "🇧🇩", length: 10 },
+  { code: "+375", country: "Belarus", flag: "🇧🇾", length: 9 },
+  { code: "+32", country: "Belgium", flag: "🇧🇪", length: 9 },
+  { code: "+501", country: "Belize", flag: "🇧🇿", length: 7 },
+  { code: "+229", country: "Benin", flag: "🇧🇯", length: 8 },
+  { code: "+975", country: "Bhutan", flag: "🇧🇹", length: 8 },
+  { code: "+591", country: "Bolivia", flag: "🇧🇴", length: 8 },
+  { code: "+387", country: "Bosnia and Herzegovina", flag: "🇧🇦", length: 8 },
+  { code: "+267", country: "Botswana", flag: "🇧🇼", length: 8 },
+  { code: "+55", country: "Brazil", flag: "🇧🇷", length: 11 },
+  { code: "+673", country: "Brunei", flag: "🇧🇳", length: 7 },
+  { code: "+359", country: "Bulgaria", flag: "🇧🇬", length: 9 },
+  { code: "+226", country: "Burkina Faso", flag: "🇧🇫", length: 8 },
+  { code: "+257", country: "Burundi", flag: "🇧🇮", length: 8 },
+  { code: "+855", country: "Cambodia", flag: "🇰🇭", length: 9 },
+  { code: "+237", country: "Cameroon", flag: "🇨🇲", length: 9 },
   { code: "+1", country: "Canada", flag: "🇨🇦", length: 10 },
+  { code: "+238", country: "Cape Verde", flag: "🇨🇻", length: 7 },
+  { code: "+236", country: "Central African Republic", flag: "🇨🇫", length: 8 },
+  { code: "+235", country: "Chad", flag: "🇹🇩", length: 8 },
+  { code: "+56", country: "Chile", flag: "🇨🇱", length: 9 },
+  { code: "+86", country: "China", flag: "🇨🇳", length: 11 },
+  { code: "+57", country: "Colombia", flag: "🇨🇴", length: 10 },
+  { code: "+269", country: "Comoros", flag: "🇰🇲", length: 7 },
+  { code: "+242", country: "Congo", flag: "🇨🇬", length: 9 },
+  { code: "+243", country: "Democratic Republic of Congo", flag: "🇨🇩", length: 9 },
+  { code: "+506", country: "Costa Rica", flag: "🇨🇷", length: 8 },
+  { code: "+385", country: "Croatia", flag: "🇭🇷", length: 9 },
+  { code: "+53", country: "Cuba", flag: "🇨🇺", length: 8 },
+  { code: "+357", country: "Cyprus", flag: "🇨🇾", length: 8 },
+  { code: "+420", country: "Czech Republic", flag: "🇨🇿", length: 9 },
+  { code: "+45", country: "Denmark", flag: "🇩🇰", length: 8 },
+  { code: "+253", country: "Djibouti", flag: "🇩🇯", length: 8 },
+  { code: "+593", country: "Ecuador", flag: "🇪🇨", length: 9 },
+  { code: "+20", country: "Egypt", flag: "🇪🇬", length: 10 },
+  { code: "+503", country: "El Salvador", flag: "🇸🇻", length: 8 },
+  { code: "+240", country: "Equatorial Guinea", flag: "🇬🇶", length: 9 },
+  { code: "+291", country: "Eritrea", flag: "🇪🇷", length: 7 },
+  { code: "+372", country: "Estonia", flag: "🇪🇪", length: 8 },
+  { code: "+251", country: "Ethiopia", flag: "🇪🇹", length: 9 },
+  { code: "+358", country: "Finland", flag: "🇫🇮", length: 9 },
+  { code: "+33", country: "France", flag: "🇫🇷", length: 10 },
+  { code: "+241", country: "Gabon", flag: "🇬🇦", length: 8 },
+  { code: "+220", country: "Gambia", flag: "🇬🇲", length: 7 },
+  { code: "+995", country: "Georgia", flag: "🇬🇪", length: 9 },
+  { code: "+49", country: "Germany", flag: "🇩🇪", length: 11 },
+  { code: "+233", country: "Ghana", flag: "🇬🇭", length: 9 },
+  { code: "+30", country: "Greece", flag: "🇬🇷", length: 10 },
+  { code: "+502", country: "Guatemala", flag: "🇬🇹", length: 8 },
+  { code: "+224", country: "Guinea", flag: "🇬🇳", length: 9 },
+  { code: "+245", country: "Guinea-Bissau", flag: "🇬🇼", length: 7 },
+  { code: "+592", country: "Guyana", flag: "🇬🇾", length: 7 },
+  { code: "+509", country: "Haiti", flag: "🇭🇹", length: 8 },
+  { code: "+504", country: "Honduras", flag: "🇭🇳", length: 8 },
+  { code: "+36", country: "Hungary", flag: "🇭🇺", length: 9 },
+  { code: "+354", country: "Iceland", flag: "🇮🇸", length: 7 },
+  { code: "+91", country: "India", flag: "🇮🇳", length: 10 },
+  { code: "+62", country: "Indonesia", flag: "🇮🇩", length: 10 },
+  { code: "+98", country: "Iran", flag: "🇮🇷", length: 10 },
+  { code: "+964", country: "Iraq", flag: "🇮🇶", length: 10 },
+  { code: "+353", country: "Ireland", flag: "🇮🇪", length: 9 },
+  { code: "+972", country: "Israel", flag: "🇮🇱", length: 9 },
+  { code: "+39", country: "Italy", flag: "🇮🇹", length: 10 },
+  { code: "+225", country: "Ivory Coast", flag: "🇨🇮", length: 8 },
+  { code: "+81", country: "Japan", flag: "🇯🇵", length: 10 },
+  { code: "+962", country: "Jordan", flag: "🇯🇴", length: 9 },
+  { code: "+7", country: "Kazakhstan", flag: "🇰🇿", length: 10 },
+  { code: "+254", country: "Kenya", flag: "🇰🇪", length: 9 },
+  { code: "+965", country: "Kuwait", flag: "🇰🇼", length: 8 },
+  { code: "+996", country: "Kyrgyzstan", flag: "🇰🇬", length: 9 },
+  { code: "+856", country: "Laos", flag: "🇱🇦", length: 8 },
+  { code: "+371", country: "Latvia", flag: "🇱🇻", length: 8 },
+  { code: "+961", country: "Lebanon", flag: "🇱🇧", length: 8 },
+  { code: "+266", country: "Lesotho", flag: "🇱🇸", length: 8 },
+  { code: "+231", country: "Liberia", flag: "🇱🇷", length: 8 },
+  { code: "+218", country: "Libya", flag: "🇱🇾", length: 9 },
+  { code: "+370", country: "Lithuania", flag: "🇱🇹", length: 8 },
+  { code: "+352", country: "Luxembourg", flag: "🇱🇺", length: 9 },
+  { code: "+261", country: "Madagascar", flag: "🇲🇬", length: 9 },
+  { code: "+265", country: "Malawi", flag: "🇲🇼", length: 9 },
+  { code: "+60", country: "Malaysia", flag: "🇲🇾", length: 9 },
+  { code: "+960", country: "Maldives", flag: "🇲🇻", length: 7 },
+  { code: "+223", country: "Mali", flag: "🇲🇱", length: 8 },
+  { code: "+356", country: "Malta", flag: "🇲🇹", length: 8 },
+  { code: "+222", country: "Mauritania", flag: "🇲🇷", length: 8 },
+  { code: "+230", country: "Mauritius", flag: "🇲🇺", length: 8 },
+  { code: "+52", country: "Mexico", flag: "🇲🇽", length: 10 },
+  { code: "+373", country: "Moldova", flag: "🇲🇩", length: 8 },
+  { code: "+377", country: "Monaco", flag: "🇲🇨", length: 8 },
+  { code: "+976", country: "Mongolia", flag: "🇲🇳", length: 8 },
+  { code: "+382", country: "Montenegro", flag: "🇲🇪", length: 8 },
+  { code: "+212", country: "Morocco", flag: "🇲🇦", length: 9 },
+  { code: "+258", country: "Mozambique", flag: "🇲🇿", length: 9 },
+  { code: "+95", country: "Myanmar", flag: "🇲🇲", length: 9 },
+  { code: "+264", country: "Namibia", flag: "🇳🇦", length: 9 },
+  { code: "+977", country: "Nepal", flag: "🇳🇵", length: 10 },
+  { code: "+31", country: "Netherlands", flag: "🇳🇱", length: 9 },
+  { code: "+64", country: "New Zealand", flag: "🇳🇿", length: 9 },
+  { code: "+505", country: "Nicaragua", flag: "🇳🇮", length: 8 },
+  { code: "+227", country: "Niger", flag: "🇳🇪", length: 8 },
+  { code: "+234", country: "Nigeria", flag: "🇳🇬", length: 10 },
+  { code: "+47", country: "Norway", flag: "🇳🇴", length: 8 },
+  { code: "+968", country: "Oman", flag: "🇴🇲", length: 8 },
+  { code: "+92", country: "Pakistan", flag: "🇵🇰", length: 10 },
+  { code: "+507", country: "Panama", flag: "🇵🇦", length: 8 },
+  { code: "+675", country: "Papua New Guinea", flag: "🇵🇬", length: 8 },
+  { code: "+595", country: "Paraguay", flag: "🇵🇾", length: 9 },
+  { code: "+51", country: "Peru", flag: "🇵🇪", length: 9 },
+  { code: "+63", country: "Philippines", flag: "🇵🇭", length: 10 },
+  { code: "+48", country: "Poland", flag: "🇵🇱", length: 9 },
+  { code: "+351", country: "Portugal", flag: "🇵🇹", length: 9 },
+  { code: "+974", country: "Qatar", flag: "🇶🇦", length: 8 },
+  { code: "+40", country: "Romania", flag: "🇷🇴", length: 9 },
+  { code: "+7", country: "Russia", flag: "🇷🇺", length: 10 },
+  { code: "+250", country: "Rwanda", flag: "🇷🇼", length: 9 },
+  { code: "+966", country: "Saudi Arabia", flag: "🇸🇦", length: 9 },
+  { code: "+221", country: "Senegal", flag: "🇸🇳", length: 9 },
+  { code: "+381", country: "Serbia", flag: "🇷🇸", length: 9 },
+  { code: "+248", country: "Seychelles", flag: "🇸🇨", length: 7 },
+  { code: "+232", country: "Sierra Leone", flag: "🇸🇱", length: 8 },
+  { code: "+65", country: "Singapore", flag: "🇸🇬", length: 8 },
+  { code: "+421", country: "Slovakia", flag: "🇸🇰", length: 9 },
+  { code: "+386", country: "Slovenia", flag: "🇸🇮", length: 8 },
+  { code: "+252", country: "Somalia", flag: "🇸🇴", length: 8 },
+  { code: "+27", country: "South Africa", flag: "🇿🇦", length: 9 },
+  { code: "+82", country: "South Korea", flag: "🇰🇷", length: 10 },
+  { code: "+211", country: "South Sudan", flag: "🇸🇸", length: 9 },
+  { code: "+34", country: "Spain", flag: "🇪🇸", length: 9 },
+  { code: "+94", country: "Sri Lanka", flag: "🇱🇰", length: 9 },
+  { code: "+249", country: "Sudan", flag: "🇸🇩", length: 9 },
+  { code: "+597", country: "Suriname", flag: "🇸🇷", length: 7 },
+  { code: "+268", country: "Eswatini", flag: "🇸🇿", length: 8 },
+  { code: "+46", country: "Sweden", flag: "🇸🇪", length: 9 },
+  { code: "+41", country: "Switzerland", flag: "🇨🇭", length: 9 },
+  { code: "+963", country: "Syria", flag: "🇸🇾", length: 9 },
+  { code: "+992", country: "Tajikistan", flag: "🇹🇯", length: 9 },
+  { code: "+255", country: "Tanzania", flag: "🇹🇿", length: 9 },
+  { code: "+66", country: "Thailand", flag: "🇹🇭", length: 9 },
+  { code: "+228", country: "Togo", flag: "🇹🇬", length: 8 },
+  { code: "+216", country: "Tunisia", flag: "🇹🇳", length: 8 },
+  { code: "+90", country: "Turkey", flag: "🇹🇷", length: 10 },
+  { code: "+993", country: "Turkmenistan", flag: "🇹🇲", length: 8 },
+  { code: "+256", country: "Uganda", flag: "🇺🇬", length: 9 },
+  { code: "+380", country: "Ukraine", flag: "🇺🇦", length: 9 },
+  { code: "+971", country: "United Arab Emirates", flag: "🇦🇪", length: 9 },
+  { code: "+44", country: "United Kingdom", flag: "🇬🇧", length: 10 },
+  { code: "+598", country: "Uruguay", flag: "🇺🇾", length: 8 },
+  { code: "+998", country: "Uzbekistan", flag: "🇺🇿", length: 9 },
+  { code: "+58", country: "Venezuela", flag: "🇻🇪", length: 10 },
+  { code: "+84", country: "Vietnam", flag: "🇻🇳", length: 9 },
+  { code: "+967", country: "Yemen", flag: "🇾🇪", length: 9 },
+  { code: "+260", country: "Zambia", flag: "🇿🇲", length: 9 },
+  { code: "+263", country: "Zimbabwe", flag: "🇿🇼", length: 9 },
 ]
 
 const companyTypes = [
@@ -194,10 +370,12 @@ export default function RegisterPage() {
     email: "",
     faydaNumber: "",
     tinNumber: "",
-    currentPosition: "",
-    currentCompany: "",
-    currentSalary: "",
+    password: "",
+    confirmPassword: "",
+    desiredPosition: "",
     expectedSalary: "",
+    professionalExperiences: [],
+    educationExperiences: [],
     skills: [],
     languages: [],
     certifications: [],
@@ -221,6 +399,27 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     tinNumber: "",
+  })
+
+  // New professional experience form state
+  const [newProfessionalExperience, setNewProfessionalExperience] = useState<Omit<ProfessionalExperience, "id">>({
+    companyName: "",
+    title: "",
+    startDate: undefined,
+    endDate: undefined,
+    currentlyWorking: false,
+    mainActivities: "",
+    reference: "",
+  })
+
+  // New education experience form state
+  const [newEducationExperience, setNewEducationExperience] = useState<Omit<EducationExperience, "id">>({
+    startDate: undefined,
+    endDate: undefined,
+    currentlyStudying: false,
+    educationLevel: "",
+    title: "",
+    school: "",
   })
 
   const handleInputChange = (field: keyof ApplicantRegistrationData, value: any) => {
@@ -297,6 +496,91 @@ export default function RegisterPage() {
     )
   }
 
+  // Professional Experience handlers
+  const handleProfessionalExperienceChange = (field: keyof Omit<ProfessionalExperience, "id">, value: any) => {
+    setNewProfessionalExperience((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const addProfessionalExperience = () => {
+    // Validate required fields
+    if (
+      !newProfessionalExperience.companyName.trim() ||
+      !newProfessionalExperience.title.trim() ||
+      !newProfessionalExperience.startDate ||
+      (!newProfessionalExperience.endDate && !newProfessionalExperience.currentlyWorking) ||
+      !newProfessionalExperience.mainActivities.trim()
+    ) {
+      return
+    }
+
+    const newExperience: ProfessionalExperience = {
+      ...newProfessionalExperience,
+      id: Date.now().toString(),
+    }
+
+    handleInputChange("professionalExperiences", [...applicantData.professionalExperiences, newExperience])
+
+    // Reset form
+    setNewProfessionalExperience({
+      companyName: "",
+      title: "",
+      startDate: undefined,
+      endDate: undefined,
+      currentlyWorking: false,
+      mainActivities: "",
+      reference: "",
+    })
+  }
+
+  const removeProfessionalExperience = (id: string) => {
+    handleInputChange(
+      "professionalExperiences",
+      applicantData.professionalExperiences.filter((exp) => exp.id !== id),
+    )
+  }
+
+  // Education Experience handlers
+  const handleEducationExperienceChange = (field: keyof Omit<EducationExperience, "id">, value: any) => {
+    setNewEducationExperience((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const addEducationExperience = () => {
+    // Validate required fields
+    if (
+      !newEducationExperience.startDate ||
+      (!newEducationExperience.endDate && !newEducationExperience.currentlyStudying) ||
+      !newEducationExperience.educationLevel ||
+      !newEducationExperience.title.trim() ||
+      !newEducationExperience.school.trim()
+    ) {
+      return
+    }
+
+    const newExperience: EducationExperience = {
+      ...newEducationExperience,
+      id: Date.now().toString(),
+    }
+
+    handleInputChange("educationExperiences", [...applicantData.educationExperiences, newExperience])
+
+    // Reset form
+    setNewEducationExperience({
+      startDate: undefined,
+      endDate: undefined,
+      currentlyStudying: false,
+      educationLevel: "",
+      title: "",
+      school: "",
+    })
+  }
+
+  const removeEducationExperience = (id: string) => {
+    handleInputChange(
+      "educationExperiences",
+      applicantData.educationExperiences.filter((exp) => exp.id !== id),
+    )
+  }
+
   const validateCurrentStep = (): boolean => {
     const errors: string[] = []
 
@@ -305,7 +589,6 @@ export default function RegisterPage() {
         case 1:
           if (!applicantData.firstName.trim()) errors.push("First Name is required")
           if (!applicantData.surname.trim()) errors.push("Surname is required")
-          if (!applicantData.birthDate) errors.push("Birth Date is required")
           if (applicantData.birthDate && !validateAge(applicantData.birthDate)) {
             errors.push("You must be at least 18 years old to register")
           }
@@ -320,6 +603,18 @@ export default function RegisterPage() {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
           if (applicantData.email && !emailRegex.test(applicantData.email)) {
             errors.push("Please enter a valid email address")
+          }
+          if (!applicantData.password) errors.push("Password is required")
+          if (!applicantData.confirmPassword) errors.push("Confirm Password is required")
+          if (
+            applicantData.password &&
+            applicantData.confirmPassword &&
+            applicantData.password !== applicantData.confirmPassword
+          ) {
+            errors.push("Passwords do not match")
+          }
+          if (applicantData.password && applicantData.password.length < 6) {
+            errors.push("Password must be at least 6 characters long")
           }
           break
 
@@ -442,9 +737,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Birth Date <span className="text-red-500">*</span>
-                  </Label>
+                  <Label className="text-sm font-medium text-gray-700">Birth Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -464,11 +757,10 @@ export default function RegisterPage() {
                         selected={applicantData.birthDate}
                         onSelect={(date) => handleInputChange("birthDate", date)}
                         disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  <p className="text-xs text-gray-500 mt-1">You must be at least 18 years old</p>
+                  <p className="text-xs text-gray-500 mt-1">Optional - Must be at least 18 years old if provided</p>
                 </div>
 
                 <div>
@@ -582,6 +874,75 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    Password <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    placeholder="Enter password"
+                    value={applicantData.password || ""}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className="mt-1 h-12"
+                  />
+                  {applicantData.password && (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-600">Strength:</span>
+                        <div className="flex gap-1">
+                          <div
+                            className={`w-6 h-1 rounded ${applicantData.password.length >= 1 ? (applicantData.password.length >= 8 && /[A-Z]/.test(applicantData.password) && /[0-9]/.test(applicantData.password) && /[^A-Za-z0-9]/.test(applicantData.password) ? "bg-green-500" : applicantData.password.length >= 6 && (/[A-Z]/.test(applicantData.password) || /[0-9]/.test(applicantData.password)) ? "bg-yellow-500" : "bg-red-500") : "bg-gray-200"}`}
+                          ></div>
+                          <div
+                            className={`w-6 h-1 rounded ${applicantData.password.length >= 6 && (/[A-Z]/.test(applicantData.password) || /[0-9]/.test(applicantData.password)) ? (applicantData.password.length >= 8 && /[A-Z]/.test(applicantData.password) && /[0-9]/.test(applicantData.password) && /[^A-Za-z0-9]/.test(applicantData.password) ? "bg-green-500" : "bg-yellow-500") : "bg-gray-200"}`}
+                          ></div>
+                          <div
+                            className={`w-6 h-1 rounded ${applicantData.password.length >= 8 && /[A-Z]/.test(applicantData.password) && /[0-9]/.test(applicantData.password) && /[^A-Za-z0-9]/.test(applicantData.password) ? "bg-green-500" : "bg-gray-200"}`}
+                          ></div>
+                        </div>
+                        <span
+                          className={`text-xs ${applicantData.password.length >= 8 && /[A-Z]/.test(applicantData.password) && /[0-9]/.test(applicantData.password) && /[^A-Za-z0-9]/.test(applicantData.password) ? "text-green-600" : applicantData.password.length >= 6 && (/[A-Z]/.test(applicantData.password) || /[0-9]/.test(applicantData.password)) ? "text-yellow-600" : "text-red-600"}`}
+                        >
+                          {applicantData.password.length >= 8 &&
+                          /[A-Z]/.test(applicantData.password) &&
+                          /[0-9]/.test(applicantData.password) &&
+                          /[^A-Za-z0-9]/.test(applicantData.password)
+                            ? "Strong"
+                            : applicantData.password.length >= 6 &&
+                                (/[A-Z]/.test(applicantData.password) || /[0-9]/.test(applicantData.password))
+                              ? "Medium"
+                              : "Weak"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Password should be at least 8 characters with uppercase, number, and special character
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={applicantData.confirmPassword || ""}
+                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                    className="mt-1 h-12"
+                  />
+                  {applicantData.confirmPassword && (
+                    <p
+                      className={`text-xs mt-1 ${applicantData.password === applicantData.confirmPassword ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {applicantData.password === applicantData.confirmPassword
+                        ? "✓ Passwords match"
+                        : "✗ Passwords do not match"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
                   <Label className="text-sm font-medium text-gray-700">Fayda Number</Label>
                   <Input
                     placeholder="Enter Fayda number (optional)"
@@ -609,37 +970,68 @@ export default function RegisterPage() {
         return (
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl text-[#0a3141]">Professional Experience</CardTitle>
-              <p className="text-gray-600">Share your professional background and experience.</p>
+              <CardTitle className="text-xl text-[#0a3141]">Professional Experience & CV</CardTitle>
+              <p className="text-gray-600">Upload your CV and provide your professional background.</p>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* CV Upload Section */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">
+                  Upload CV/Resume <span className="text-red-500">*</span>
+                </Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors bg-gray-50 mt-1">
+                  <input
+                    type="file"
+                    id="cv-upload"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        console.log("CV file selected:", file.name)
+                      }
+                    }}
+                  />
+                  <label htmlFor="cv-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-10 h-10 text-gray-400">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium">Click to upload</span> or drag and drop
+                      </div>
+                      <div className="text-xs text-gray-400">PDF, DOC, DOCX (max 5MB)</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Work Experience Summary */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Work Experience Summary</Label>
+                <Textarea
+                  placeholder="Briefly describe your work experience, achievements, and key responsibilities..."
+                  value={applicantData.workExperience}
+                  onChange={(e) => handleInputChange("workExperience", e.target.value)}
+                  className="mt-1 min-h-[120px]"
+                />
+              </div>
+
+              {/* Desired Position and Expected Salary */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">Current Position</Label>
+                  <Label className="text-sm font-medium text-gray-700">Desired Position Title</Label>
                   <Input
                     placeholder="e.g. Software Developer"
-                    value={applicantData.currentPosition}
-                    onChange={(e) => handleInputChange("currentPosition", e.target.value)}
-                    className="mt-1 h-12"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Current Company</Label>
-                  <Input
-                    placeholder="e.g. ABC Company Ltd"
-                    value={applicantData.currentCompany}
-                    onChange={(e) => handleInputChange("currentCompany", e.target.value)}
-                    className="mt-1 h-12"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Current Salary</Label>
-                  <Input
-                    placeholder="e.g. 1,500,000 TZS"
-                    value={applicantData.currentSalary}
-                    onChange={(e) => handleInputChange("currentSalary", e.target.value)}
+                    value={applicantData.desiredPosition}
+                    onChange={(e) => handleInputChange("desiredPosition", e.target.value)}
                     className="mt-1 h-12"
                   />
                 </div>
@@ -655,6 +1047,381 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              {/* Professional Experience Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-[#0a3141]">Professional Experience</h3>
+                </div>
+
+                {/* List of added professional experiences */}
+                {applicantData.professionalExperiences.length > 0 && (
+                  <div className="space-y-4 mb-6">
+                    {applicantData.professionalExperiences.map((exp) => (
+                      <div key={exp.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                        <button
+                          onClick={() => removeProfessionalExperience(exp.id)}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Company:</span>{" "}
+                            <span className="text-sm">{exp.companyName}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Title:</span>{" "}
+                            <span className="text-sm">{exp.title}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Period:</span>{" "}
+                            <span className="text-sm">
+                              {format(exp.startDate!, "MMM yyyy")} -{" "}
+                              {exp.currentlyWorking ? "Present" : format(exp.endDate!, "MMM yyyy")}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <span className="text-sm font-medium text-gray-700">Main Activities:</span>
+                          <p className="text-sm mt-1">{exp.mainActivities}</p>
+                        </div>
+                        {exp.reference && (
+                          <div className="mt-2">
+                            <span className="text-sm font-medium text-gray-700">Reference:</span>
+                            <p className="text-sm mt-1">{exp.reference}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new professional experience form */}
+                <Card className="border border-gray-200">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Company Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Enter company name"
+                          value={newProfessionalExperience.companyName}
+                          onChange={(e) => handleProfessionalExperienceChange("companyName", e.target.value)}
+                          className="mt-1 h-12"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Title <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Enter job title"
+                          value={newProfessionalExperience.title}
+                          onChange={(e) => handleProfessionalExperienceChange("title", e.target.value)}
+                          className="mt-1 h-12"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Start Date <span className="text-red-500">*</span>
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full h-12 mt-1 justify-start text-left font-normal",
+                                !newProfessionalExperience.startDate && "text-muted-foreground",
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {newProfessionalExperience.startDate
+                                ? format(newProfessionalExperience.startDate, "MMM yyyy")
+                                : "Select start date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 z-50" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={newProfessionalExperience.startDate}
+                              onSelect={(date) => handleProfessionalExperienceChange("startDate", date)}
+                              disabled={(date) => date > new Date()}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-gray-700">
+                            End Date{" "}
+                            {!newProfessionalExperience.currentlyWorking && <span className="text-red-500">*</span>}
+                          </Label>
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id="currently-working"
+                              checked={newProfessionalExperience.currentlyWorking}
+                              onChange={(e) => handleProfessionalExperienceChange("currentlyWorking", e.target.checked)}
+                              className="mr-2"
+                            />
+                            <label htmlFor="currently-working" className="text-xs text-gray-600">
+                              Currently working here
+                            </label>
+                          </div>
+                        </div>
+                        {!newProfessionalExperience.currentlyWorking && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full h-12 mt-1 justify-start text-left font-normal",
+                                  !newProfessionalExperience.endDate && "text-muted-foreground",
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {newProfessionalExperience.endDate
+                                  ? format(newProfessionalExperience.endDate, "MMM yyyy")
+                                  : "Select end date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={newProfessionalExperience.endDate}
+                                onSelect={(date) => handleProfessionalExperienceChange("endDate", date)}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  (newProfessionalExperience.startDate && date < newProfessionalExperience.startDate)
+                                }
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label className="text-sm font-medium text-gray-700">
+                          Main Activities <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          placeholder="Describe your main responsibilities and achievements..."
+                          value={newProfessionalExperience.mainActivities}
+                          onChange={(e) => handleProfessionalExperienceChange("mainActivities", e.target.value)}
+                          className="mt-1 min-h-[80px]"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label className="text-sm font-medium text-gray-700">Reference</Label>
+                        <Input
+                          placeholder="Enter reference contact (optional)"
+                          value={newProfessionalExperience.reference}
+                          onChange={(e) => handleProfessionalExperienceChange("reference", e.target.value)}
+                          className="mt-1 h-12"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={addProfessionalExperience}
+                        className="bg-[#d2f277] text-black hover:bg-[#c2e267]"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add Experience
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Education Experience Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-[#0a3141]">Education</h3>
+                </div>
+
+                {/* List of added education experiences */}
+                {applicantData.educationExperiences.length > 0 && (
+                  <div className="space-y-4 mb-6">
+                    {applicantData.educationExperiences.map((exp) => (
+                      <div key={exp.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+                        <button
+                          onClick={() => removeEducationExperience(exp.id)}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">School:</span>{" "}
+                            <span className="text-sm">{exp.school}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Title:</span>{" "}
+                            <span className="text-sm">{exp.title}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Level:</span>{" "}
+                            <span className="text-sm">{exp.educationLevel}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Period:</span>{" "}
+                            <span className="text-sm">
+                              {format(exp.startDate!, "MMM yyyy")} -{" "}
+                              {exp.currentlyStudying ? "Present" : format(exp.endDate!, "MMM yyyy")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new education experience form */}
+                <Card className="border border-gray-200">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          School <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Enter school or institution name"
+                          value={newEducationExperience.school}
+                          onChange={(e) => handleEducationExperienceChange("school", e.target.value)}
+                          className="mt-1 h-12"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Education Level <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={newEducationExperience.educationLevel}
+                          onValueChange={(value) => handleEducationExperienceChange("educationLevel", value)}
+                        >
+                          <SelectTrigger className="mt-1 h-12">
+                            <SelectValue placeholder="Select education level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {educationLevels.map((level) => (
+                              <SelectItem key={level} value={level}>
+                                {level}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Title <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Enter degree or certificate title"
+                          value={newEducationExperience.title}
+                          onChange={(e) => handleEducationExperienceChange("title", e.target.value)}
+                          className="mt-1 h-12"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Start Date <span className="text-red-500">*</span>
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full h-12 mt-1 justify-start text-left font-normal",
+                                !newEducationExperience.startDate && "text-muted-foreground",
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {newEducationExperience.startDate
+                                ? format(newEducationExperience.startDate, "MMM yyyy")
+                                : "Select start date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 z-50" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={newEducationExperience.startDate}
+                              onSelect={(date) => handleEducationExperienceChange("startDate", date)}
+                              disabled={(date) => date > new Date()}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-gray-700">
+                            End Date{" "}
+                            {!newEducationExperience.currentlyStudying && <span className="text-red-500">*</span>}
+                          </Label>
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id="currently-studying"
+                              checked={newEducationExperience.currentlyStudying}
+                              onChange={(e) => handleEducationExperienceChange("currentlyStudying", e.target.checked)}
+                              className="mr-2"
+                            />
+                            <label htmlFor="currently-studying" className="text-xs text-gray-600">
+                              Currently studying here
+                            </label>
+                          </div>
+                        </div>
+                        {!newEducationExperience.currentlyStudying && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full h-12 mt-1 justify-start text-left font-normal",
+                                  !newEducationExperience.endDate && "text-muted-foreground",
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {newEducationExperience.endDate
+                                  ? format(newEducationExperience.endDate, "MMM yyyy")
+                                  : "Select end date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={newEducationExperience.endDate}
+                                onSelect={(date) => handleEducationExperienceChange("endDate", date)}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  (newEducationExperience.startDate && date < newEducationExperience.startDate)
+                                }
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                      <Button onClick={addEducationExperience} className="bg-[#d2f277] text-black hover:bg-[#c2e267]">
+                        <Plus className="w-4 h-4 mr-2" /> Add Education
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Skills Section */}
               <div>
                 <Label className="text-sm font-medium text-gray-700">Skills</Label>
                 <div className="flex gap-2 mt-1">
@@ -682,6 +1449,7 @@ export default function RegisterPage() {
                 <p className="text-xs text-gray-500 mt-1">Press Enter or click + to add skills</p>
               </div>
 
+              {/* Languages and Certifications */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Languages</Label>
@@ -735,22 +1503,9 @@ export default function RegisterPage() {
                   </div>
                 </div>
               </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Work Experience Summary</Label>
-                <Textarea
-                  placeholder="Briefly describe your work experience, achievements, and key responsibilities..."
-                  value={applicantData.workExperience}
-                  onChange={(e) => handleInputChange("workExperience", e.target.value)}
-                  className="mt-1 min-h-[120px]"
-                />
-              </div>
             </CardContent>
           </Card>
         )
-
-      default:
-        return null
     }
   }
 
@@ -765,12 +1520,12 @@ export default function RegisterPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">
                     Company Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    placeholder="Enter company name"
+                    placeholder="Enter your company name"
                     value={companyData.companyName}
                     onChange={(e) => handleCompanyInputChange("companyName", e.target.value)}
                     className="mt-1 h-12"
@@ -841,20 +1596,20 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">City / Location</Label>
+                  <Label className="text-sm font-medium text-gray-700">City Location</Label>
                   <Input
-                    placeholder="Enter city or location"
+                    placeholder="Enter city location"
                     value={companyData.cityLocation}
                     onChange={(e) => handleCompanyInputChange("cityLocation", e.target.value)}
                     className="mt-1 h-12"
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-medium text-gray-700">Official Business Email</Label>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Official Email</Label>
                   <Input
                     type="email"
-                    placeholder="company@example.com"
+                    placeholder="official@company.com"
                     value={companyData.officialEmail}
                     onChange={(e) => handleCompanyInputChange("officialEmail", e.target.value)}
                     className="mt-1 h-12"
@@ -862,7 +1617,9 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label className="text-sm font-medium text-gray-700">Official Phone Number</Label>
+                  <Label className="text-sm font-medium text-gray-700">
+                    Official Phone Number <span className="text-red-500">*</span>
+                  </Label>
                   <div className="flex gap-2 mt-1">
                     <Select
                       value={companyData.officialPhoneCountryCode}
@@ -882,17 +1639,14 @@ export default function RegisterPage() {
                     <Input
                       placeholder="712 000 000"
                       value={companyData.officialPhone}
-                      onChange={(e) => {
-                        const cleanedValue = e.target.value.replace(/[^\d\s-]/g, "")
-                        handleCompanyInputChange("officialPhone", cleanedValue)
-                      }}
+                      onChange={(e) => handleCompanyInputChange("officialPhone", e.target.value)}
                       className="flex-1 h-12"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Enter numbers only (spaces and hyphens allowed)</p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">Website URL</Label>
                   <Input
                     placeholder="https://www.company.com"
@@ -910,12 +1664,12 @@ export default function RegisterPage() {
         return (
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl text-[#0a3141]">Account Administrator Details</CardTitle>
-              <p className="text-gray-600">Setup the administrator account for your company.</p>
+              <CardTitle className="text-xl text-[#0a3141]">Administrator Details</CardTitle>
+              <p className="text-gray-600">Setup administrator account.</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">
                     Full Name <span className="text-red-500">*</span>
                   </Label>
@@ -927,7 +1681,7 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">
                     Email Address <span className="text-red-500">*</span>
                   </Label>
@@ -938,7 +1692,6 @@ export default function RegisterPage() {
                     onChange={(e) => handleCompanyInputChange("adminEmail", e.target.value)}
                     className="mt-1 h-12"
                   />
-                  <p className="text-xs text-gray-500 mt-1">This email will be used for login</p>
                 </div>
 
                 <div className="md:col-span-2">
@@ -964,39 +1717,33 @@ export default function RegisterPage() {
                     <Input
                       placeholder="712 000 000"
                       value={companyData.adminPhone}
-                      onChange={(e) => {
-                        const cleanedValue = e.target.value.replace(/[^\d\s-]/g, "")
-                        handleCompanyInputChange("adminPhone", cleanedValue)
-                      }}
+                      onChange={(e) => handleCompanyInputChange("adminPhone", e.target.value)}
                       className="flex-1 h-12"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Enter numbers only (spaces and hyphens allowed)</p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">
                     Password <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     type="password"
-                    placeholder="••••••••••••"
+                    placeholder="Enter password"
                     value={companyData.password}
                     onChange={(e) => handleCompanyInputChange("password", e.target.value)}
                     className="mt-1 h-12"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Use 8+ characters with uppercase, lowercase, numbers & symbols
-                  </p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <Label className="text-sm font-medium text-gray-700">
                     Confirm Password <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     type="password"
-                    placeholder="••••••••••••"
+                    placeholder="Confirm password"
                     value={companyData.confirmPassword}
                     onChange={(e) => handleCompanyInputChange("confirmPassword", e.target.value)}
                     className="mt-1 h-12"
@@ -1012,7 +1759,7 @@ export default function RegisterPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-xl text-[#0a3141]">Business Verification</CardTitle>
-              <p className="text-gray-600">Verify your business credentials to complete registration.</p>
+              <p className="text-gray-600">Verify your business credentials.</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -1028,23 +1775,21 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-700">
-                  Business License <span className="text-red-500">*</span>
-                </Label>
+                <Label className="text-sm font-medium text-gray-700">Business License</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors bg-gray-50 mt-1">
                   <input
                     type="file"
-                    id="business-license"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    id="license-upload"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (file) {
-                        console.log("Business license selected:", file.name)
+                        console.log("License file selected:", file.name)
                       }
                     }}
                   />
-                  <label htmlFor="business-license" className="cursor-pointer">
+                  <label htmlFor="license-upload" className="cursor-pointer">
                     <div className="flex flex-col items-center space-y-2">
                       <div className="w-10 h-10 text-gray-400">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1059,43 +1804,7 @@ export default function RegisterPage() {
                       <div className="text-sm text-gray-600">
                         <span className="font-medium">Click to upload</span> or drag and drop
                       </div>
-                      <div className="text-xs text-gray-400">PDF, JPG, PNG (max 10MB)</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Company Logo</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors bg-gray-50 mt-1">
-                  <input
-                    type="file"
-                    id="company-logo"
-                    accept=".jpg,.jpeg,.png,.svg"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        console.log("Company logo selected:", file.name)
-                      }
-                    }}
-                  />
-                  <label htmlFor="company-logo" className="cursor-pointer">
-                    <div className="flex flex-col items-center space-y-2">
-                      <div className="w-10 h-10 text-gray-400">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
-                        </svg>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">Click to upload</span> or drag and drop
-                      </div>
-                      <div className="text-xs text-gray-400">JPG, PNG, SVG (max 5MB) - Optional</div>
+                      <div className="text-xs text-gray-400">PDF, DOC, DOCX, JPG, JPEG, PNG (max 5MB)</div>
                     </div>
                   </label>
                 </div>
@@ -1103,134 +1812,61 @@ export default function RegisterPage() {
             </CardContent>
           </Card>
         )
-
-      default:
-        return null
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f5f7fa] to-white">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 min-h-screen p-6">
-          <div className="mb-8">
-            <Link href="/" className="flex items-center gap-3">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-9xNdd6tEqppxZ2JNyyzzlibUNBOJ99.png"
-                alt="ABH Connect Logo"
-                width={40}
-                height={40}
-              />
-              <span className="text-xl font-bold text-[#0a3141]">ABH Connect</span>
-            </Link>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-lg font-semibold text-gray-900">
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      <div className="container max-w-4xl mx-auto p-6">
+        <Card className="mb-8">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-2xl font-bold">
               {userType === "applicant" ? "Applicant Registration" : "Company Registration"}
-            </h1>
-          </div>
-
-          <div className="space-y-4">
-            {steps.map((step, index) => {
-              const Icon = step.icon
-              const isActive = currentStep === step.id
-              const isCompleted = currentStep > step.id
-
-              return (
-                <div key={step.id} className="flex items-start gap-3">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isActive
-                          ? "bg-[#d2f277] text-[#0a3141]"
-                          : isCompleted
-                            ? "bg-[#0a3141] text-white"
-                            : "bg-gray-200 text-gray-400"
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
-                    </div>
-                    {index < steps.length - 1 && <div className="w-px h-8 bg-gray-200 mt-2" />}
-                  </div>
-                  <div className="flex-1 pb-8">
-                    <h3 className={`font-medium ${isActive ? "text-[#0a3141]" : "text-gray-600"}`}>{step.title}</h3>
-                    <p className="text-sm text-gray-500">{step.subtitle}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-8">
-            <Link href="/auth" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#0a3141]">
-              <ChevronLeft className="w-4 h-4" />
-              Back to login
-            </Link>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            {/* Progress Bar */}
-            <div className="mb-8">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>
-                  Step {currentStep} of {steps.length}
-                </span>
-                <span>{Math.round((currentStep / steps.length) * 100)}% Complete</span>
-              </div>
-              <Progress value={(currentStep / steps.length) * 100} className="h-2" />
-            </div>
-
-            {userType === "applicant" ? renderApplicantStepContent() : renderCompanyStepContent()}
-
-            <div className="mt-8">
-              {/* Validation Errors */}
-              {validationErrors.length > 0 && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <h4 className="text-sm font-medium text-red-800 mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Please fix the following errors:
-                  </h4>
-                  <ul className="text-sm text-red-700 space-y-1">
-                    {validationErrors.map((error, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <div className="w-1 h-1 bg-red-500 rounded-full flex-shrink-0" />
-                        {error}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <Separator className="mb-6" />
-
-              <div className="flex justify-between">
-                <div>
-                  {currentStep > 1 && (
-                    <Button
-                      onClick={handleBack}
-                      variant="outline"
-                      className="px-6 h-12 border-[#0a3141] text-[#0a3141] hover:bg-[#0a3141] hover:text-white"
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </Button>
-                  )}
-                </div>
-                <Button
-                  onClick={handleContinue}
-                  disabled={loading}
-                  className="px-8 h-12 bg-[#d2f277] text-black hover:bg-[#c2e267] font-medium"
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-6">
+              {steps.map((step) => (
+                <div
+                  key={step.id}
+                  className={`flex flex-col items-center ${
+                    step.id === currentStep ? "text-[#0a3141]" : "text-gray-500"
+                  }`}
                 >
-                  {loading ? "Processing..." : currentStep === steps.length ? "Complete Registration" : "Continue"}
-                </Button>
-              </div>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                      step.id === currentStep ? "border-[#d2f277] bg-[#d2f277] text-black" : "border-gray-300"
+                    }`}
+                  >
+                    <step.icon className="w-5 h-5" />
+                  </div>
+                  <div className="text-sm mt-2">{step.title}</div>
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {userType === "applicant" ? renderApplicantStepContent() : renderCompanyStepContent()}
+
+        {validationErrors.length > 0 && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong className="font-bold">Validation Errors:</strong>
+            <ul className="list-disc ml-5">
+              {validationErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
           </div>
+        )}
+
+        <div className="flex justify-between mt-6">
+          <Button onClick={handleBack} disabled={currentStep === 1} variant="outline">
+            Back
+          </Button>
+          <Button onClick={handleContinue} disabled={loading} className="bg-[#0a3141] text-white hover:bg-[#0a3141]/80">
+            {loading ? "Loading..." : currentStep === steps.length ? "Complete Registration" : "Continue"}
+          </Button>
         </div>
       </div>
     </div>
