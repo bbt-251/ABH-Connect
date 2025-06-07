@@ -20,6 +20,7 @@ interface Question {
   id: string
   question: string
   choices: string[]
+  correctAnswerIndex: number | null
 }
 
 interface MultipleChoiceSet {
@@ -31,7 +32,9 @@ interface MultipleChoiceSet {
 export default function CreateMultipleChoiceForm({ isOpen, onClose, onSave }: CreateMultipleChoiceFormProps) {
   const [name, setName] = useState("")
   const [active, setActive] = useState(true)
-  const [questions, setQuestions] = useState<Question[]>([{ id: "1", question: "", choices: ["", ""] }])
+  const [questions, setQuestions] = useState<Question[]>([
+    { id: "1", question: "", choices: ["", ""], correctAnswerIndex: null },
+  ])
   const [showAIModal, setShowAIModal] = useState(false)
 
   const addQuestion = () => {
@@ -39,6 +42,7 @@ export default function CreateMultipleChoiceForm({ isOpen, onClose, onSave }: Cr
       id: Date.now().toString(),
       question: "",
       choices: ["", ""],
+      correctAnswerIndex: null,
     }
     setQuestions([...questions, newQuestion])
   }
@@ -81,6 +85,10 @@ export default function CreateMultipleChoiceForm({ isOpen, onClose, onSave }: Cr
     )
   }
 
+  const updateCorrectAnswer = (questionId: string, choiceIndex: number) => {
+    setQuestions(questions.map((q) => (q.id === questionId ? { ...q, correctAnswerIndex: choiceIndex } : q)))
+  }
+
   const handleSave = () => {
     const multipleChoiceSet: MultipleChoiceSet = {
       name,
@@ -102,6 +110,7 @@ export default function CreateMultipleChoiceForm({ isOpen, onClose, onSave }: Cr
       choices: Array(params.numberOfChoices)
         .fill("")
         .map((_, i) => `Option ${i + 1}`),
+      correctAnswerIndex: null,
     }
     setQuestions([...questions, generatedQuestion])
   }
@@ -165,13 +174,22 @@ export default function CreateMultipleChoiceForm({ isOpen, onClose, onSave }: Cr
 
                     <div className="space-y-2">
                       <Label>Choices</Label>
+                      <p className="text-sm text-gray-600">Select the radio button next to the correct answer</p>
                       <div className="space-y-2">
                         {question.choices.map((choice, choiceIndex) => (
                           <div key={choiceIndex} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`correct-${question.id}`}
+                              checked={question.correctAnswerIndex === choiceIndex}
+                              onChange={() => updateCorrectAnswer(question.id, choiceIndex)}
+                              className="w-4 h-4 text-blue-600"
+                            />
                             <Input
                               value={choice}
                               onChange={(e) => updateChoice(question.id, choiceIndex, e.target.value)}
                               placeholder={`Choice ${choiceIndex + 1}`}
+                              className="flex-1"
                             />
                             {question.choices.length > 2 && (
                               <Button
