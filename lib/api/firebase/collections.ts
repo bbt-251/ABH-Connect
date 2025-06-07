@@ -7,3 +7,4 @@ export const jobPostCollection = collection(db, "jobPost");
 export const multipleChoiceCollection = collection(db, "multipleChoice"); 
 export const shortAnswerCollection = collection(db, "shortAnswer"); 
 export const screeningQuestionCollection = collection(db, "screeningQuestion"); 
+export const matchingCriteriaCollection = collection(db, "matchingCriteria"); 
