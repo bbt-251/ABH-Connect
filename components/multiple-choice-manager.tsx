@@ -1,12 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Upload, Crown } from "lucide-react"
 import CreateMultipleChoiceForm from "./create-multiple-choice-form"
+import { useAuth } from "@/context/authContext"
+import { useToast } from "@/context/toastContext"
+import MultipleChoiceModel from "@/models/multiple-choice"
+import { onSnapshot, query, where } from "firebase/firestore"
+import { multipleChoiceCollection } from "@/lib/api/firebase/collections"
+import { deleteMultipleChoice } from "@/lib/api/job/multiple-choice-service"
 
 interface MultipleChoiceManagerProps {
     isOpen: boolean
@@ -15,53 +21,36 @@ interface MultipleChoiceManagerProps {
 
 export default function MultipleChoiceManager({ isOpen, onClose }: MultipleChoiceManagerProps) {
     const [showCreateForm, setShowCreateForm] = useState(false)
-    const [editingSet, setEditingSet] = useState<any>(null)
+    const [editingSet, setEditingSet] = useState<any>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+    const [toDeleteID, setToDeleteID] = useState<string>("");
+    const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
-    // Sample multiple choice sets
-    const multipleChoiceSets = [
-        {
-            id: "mc-set-1",
-            name: "Technical Skills Assessment",
-            active: true,
-            questionCount: 8,
-            description: "Programming languages, frameworks, and technical tools",
-        },
-        {
-            id: "mc-set-2",
-            name: "Communication Skills",
-            active: true,
-            questionCount: 5,
-            description: "Verbal and written communication abilities",
-        },
-        {
-            id: "mc-set-3",
-            name: "Project Management Experience",
-            active: false,
-            questionCount: 6,
-            description: "Methodologies, tools, and leadership experience",
-        },
-        {
-            id: "mc-set-4",
-            name: "Work Environment Preferences",
-            active: true,
-            questionCount: 4,
-            description: "Remote work, team size, and schedule preferences",
-        },
-    ]
+    const { user } = useAuth();
+    const { showToast } = useToast();
+
+    const [multipleChoiceSets, setMultipleChoiceSets] = useState<MultipleChoiceModel[]>([]);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user) {
+            const dataQuery = query(multipleChoiceCollection, where("uid", "==", user.uid));
+            const unsubscribe = onSnapshot(dataQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => doc.data());
+                setMultipleChoiceSets(docs as unknown as MultipleChoiceModel[]);
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
+        } else {
+            setMultipleChoiceSets([]);
+        }
+    }, []);
 
     const handleCreateNew = () => {
         setShowCreateForm(true)
     }
 
     const handleImport = () => {
-        alert("Import is a premium feature. Please upgrade to Pro to access this functionality.")
-    }
-
-    const handleSaveMultipleChoice = (multipleChoiceSet: any) => {
-        console.log("Saved multiple choice set:", multipleChoiceSet)
-        setShowCreateForm(false)
-        setEditingSet(null)
-        // Here you would add the new set to your list
+        showToast("Import is a premium feature. Please upgrade to Pro to access this functionality.", "Oops", "warning");
     }
 
     const handleEditSet = (set: any) => {
@@ -70,11 +59,25 @@ export default function MultipleChoiceManager({ isOpen, onClose }: MultipleChoic
     }
 
     const handleDeleteSet = (setId: string) => {
-        if (confirm("Are you sure you want to delete this multiple choice set?")) {
-            console.log("Deleting set:", setId)
-            // Here you would implement the actual delete logic
-        }
+        setShowDeleteDialog(true);
+        setToDeleteID(setId);
     }
+
+    const confirmDelete = async () => {
+        if (toDeleteID) {
+            console.log("Deleting set:", toDeleteID);
+            setDeleteLoading(true);
+
+            showToast("Deleting...", "Info");
+            const res = await deleteMultipleChoice(toDeleteID);
+            if (res) showToast("Deleted!", "Success", "success");
+            else showToast("Error deleting multiple choice. Please try again!", "Error", "error");
+
+            setShowDeleteDialog(false); // Close the confirmation dialog
+            setToDeleteID(""); // Reset the set to delete
+            setDeleteLoading(false);
+        }
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -116,14 +119,14 @@ export default function MultipleChoiceManager({ isOpen, onClose }: MultipleChoic
                                         </div>
                                         <p className="text-sm text-gray-600 mb-2">{set.description}</p>
                                         <p className="text-sm text-gray-500">
-                                            {set.questionCount} question{set.questionCount !== 1 ? "s" : ""}
+                                            {set.questions.length} question{set.questions.length !== 1 ? "s" : ""}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button size="sm" variant="outline" onClick={() => handleEditSet(set)}>
                                             Edit
                                         </Button>
-                                        <Button size="sm" variant="outline" onClick={() => handleDeleteSet(set.id)}>
+                                        <Button size="sm" variant="outline" disabled={deleteLoading} onClick={() => handleDeleteSet(set.id)}>
                                             Delete
                                         </Button>
                                     </div>
@@ -139,15 +142,35 @@ export default function MultipleChoiceManager({ isOpen, onClose }: MultipleChoic
                     </Button>
                 </div>
             </DialogContent>
+
             <CreateMultipleChoiceForm
                 isOpen={showCreateForm}
                 onClose={() => {
                     setShowCreateForm(false)
                     setEditingSet(null)
                 }}
-                onSave={handleSaveMultipleChoice}
                 editingSet={editingSet}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-gray-600">
+                        Are you sure you want to delete this multiple-choice set? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end mt-4 gap-2">
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={confirmDelete}>
+                            {deleteLoading ? "Deleting ..." : "Delete"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Dialog>
     )
 }
