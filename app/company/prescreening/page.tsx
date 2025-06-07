@@ -9,12 +9,56 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, Edit, Trash2, Eye, Calendar, BarChart3, FileText, MessageSquare } from "lucide-react"
 import ShortAnswerManager from "@/components/short-answer-manager"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function ApplicantEvaluationPage() {
   const [activeTab, setActiveTab] = useState("screening")
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showMultipleChoiceManager, setShowMultipleChoiceManager] = useState(false)
   const [showShortAnswerManager, setShowShortAnswerManager] = useState(false)
+
+  const [showCreateCriteriaSetModal, setShowCreateCriteriaSetModal] = useState(false)
+  const [showCustomCriteriaModal, setShowCustomCriteriaModal] = useState(false)
+  const [criteriaSetName, setCriteriaSetName] = useState("")
+  const [selectedCriteria, setSelectedCriteria] = useState<any[]>([])
+  const [customCriteriaName, setCustomCriteriaName] = useState("")
+  const [customCriteriaType, setCustomCriteriaType] = useState("")
+  const [customCriteriaOptions, setCustomCriteriaOptions] = useState("")
+
+  const defaultCriteria = [
+    { id: "gender", name: "Gender", type: "select", options: ["Male", "Female", "Any"] },
+    {
+      id: "education_level",
+      name: "Level of Education",
+      type: "select",
+      options: ["High School", "Bachelor's Degree", "Master's Degree", "PhD"],
+    },
+    { id: "years_experience", name: "Years of Experience", type: "number", unit: "years" },
+    { id: "age", name: "Age", type: "number", unit: "years" },
+    { id: "matching_score", name: "Matching Score", type: "number", unit: "%" },
+    { id: "screening_score", name: "Screening Score", type: "number", unit: "%" },
+  ]
+
+  const customCriteria = [
+    { id: "remote_work", name: "Remote Work Preference", type: "select", options: ["Yes", "No", "Hybrid"] },
+    {
+      id: "time_zone",
+      name: "Time Zone",
+      type: "select",
+      options: ["UTC-8 to UTC-5", "UTC-5 to UTC+0", "UTC+0 to UTC+5", "UTC+5 to UTC+8"],
+    },
+    { id: "salary_range", name: "Expected Salary Range", type: "number", unit: "USD" },
+  ]
+
+  const allCriteria = [...defaultCriteria, ...customCriteria]
 
   return (
     <div className="space-y-6">
@@ -107,10 +151,16 @@ export default function ApplicantEvaluationPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-gray-500">Questions:</span>
-                              <span className="ml-2 font-medium">8 (5 MC, 3 SA)</span>
+                              <span className="text-gray-500">Multiple Choice Sets:</span>
+                              <span className="ml-2 font-medium">2 sets (Technical Skills, Work Environment)</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Short Answer Questions:</span>
+                              <span className="ml-2 font-medium">
+                                3 questions (Problem Solving, Leadership, Technical)
+                              </span>
                             </div>
                             <div>
                               <span className="text-gray-500">Est. Time:</span>
@@ -120,10 +170,12 @@ export default function ApplicantEvaluationPage() {
                               <span className="text-gray-500">Used in Jobs:</span>
                               <span className="ml-2 font-medium">12 active positions</span>
                             </div>
-                            <div>
-                              <span className="text-gray-500">Completion Rate:</span>
-                              <span className="ml-2 font-medium">89%</span>
-                            </div>
+                          </div>
+                          <div className="flex gap-2 text-xs">
+                            <Badge variant="secondary">Technical Skills Assessment</Badge>
+                            <Badge variant="secondary">Work Environment Preferences</Badge>
+                            <Badge variant="secondary">Problem Solving Approach</Badge>
+                            <Badge variant="secondary">+2 more</Badge>
                           </div>
                         </div>
 
@@ -150,10 +202,14 @@ export default function ApplicantEvaluationPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-gray-500">Questions:</span>
-                              <span className="ml-2 font-medium">6 (3 MC, 3 SA)</span>
+                              <span className="text-gray-500">Multiple Choice Sets:</span>
+                              <span className="ml-2 font-medium">1 set (Communication Skills)</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Short Answer Questions:</span>
+                              <span className="ml-2 font-medium">2 questions (Career Motivation, Leadership)</span>
                             </div>
                             <div>
                               <span className="text-gray-500">Est. Time:</span>
@@ -163,10 +219,11 @@ export default function ApplicantEvaluationPage() {
                               <span className="text-gray-500">Used in Jobs:</span>
                               <span className="ml-2 font-medium">5 active positions</span>
                             </div>
-                            <div>
-                              <span className="text-gray-500">Completion Rate:</span>
-                              <span className="ml-2 font-medium">92%</span>
-                            </div>
+                          </div>
+                          <div className="flex gap-2 text-xs">
+                            <Badge variant="secondary">Communication Skills</Badge>
+                            <Badge variant="secondary">Career Motivation</Badge>
+                            <Badge variant="secondary">Leadership Experience</Badge>
                           </div>
                         </div>
 
@@ -193,23 +250,28 @@ export default function ApplicantEvaluationPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-gray-500">Questions:</span>
-                              <span className="ml-2 font-medium">7 (4 MC, 3 SA)</span>
+                              <span className="text-gray-500">Multiple Choice Sets:</span>
+                              <span className="ml-2 font-medium">2 sets (Technical Skills, Project Management)</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Short Answer Questions:</span>
+                              <span className="ml-2 font-medium">1 question (Problem Solving)</span>
                             </div>
                             <div>
                               <span className="text-gray-500">Est. Time:</span>
                               <span className="ml-2 font-medium">18 minutes</span>
                             </div>
                             <div>
-                              <span className="text-gray-500">Used in Jobs:</span>
-                              <span className="ml-2 font-medium">Not assigned</span>
-                            </div>
-                            <div>
                               <span className="text-gray-500">Status:</span>
                               <span className="ml-2 font-medium">In development</span>
                             </div>
+                          </div>
+                          <div className="flex gap-2 text-xs">
+                            <Badge variant="secondary">Technical Skills Assessment</Badge>
+                            <Badge variant="secondary">Project Management Experience</Badge>
+                            <Badge variant="secondary">Problem Solving Approach</Badge>
                           </div>
                         </div>
 
@@ -236,10 +298,14 @@ export default function ApplicantEvaluationPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div>
-                              <span className="text-gray-500">Questions:</span>
-                              <span className="ml-2 font-medium">5 (5 MC, 0 SA)</span>
+                              <span className="text-gray-500">Multiple Choice Sets:</span>
+                              <span className="ml-2 font-medium">1 set (Work Environment Preferences)</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Short Answer Questions:</span>
+                              <span className="ml-2 font-medium">0 questions</span>
                             </div>
                             <div>
                               <span className="text-gray-500">Est. Time:</span>
@@ -249,10 +315,9 @@ export default function ApplicantEvaluationPage() {
                               <span className="text-gray-500">Used in Jobs:</span>
                               <span className="ml-2 font-medium">All positions</span>
                             </div>
-                            <div>
-                              <span className="text-gray-500">Completion Rate:</span>
-                              <span className="ml-2 font-medium">96%</span>
-                            </div>
+                          </div>
+                          <div className="flex gap-2 text-xs">
+                            <Badge variant="secondary">Work Environment Preferences</Badge>
                           </div>
                         </div>
                       </div>
@@ -354,142 +419,112 @@ export default function ApplicantEvaluationPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">Matching Criteria</h2>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Criteria Set
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowCustomCriteriaModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Define Custom Criteria
+                </Button>
+                <Button onClick={() => setShowCreateCriteriaSetModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create a set of criteria
+                </Button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Criteria Templates</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">Software Engineer - Senior</h4>
-                          <p className="text-sm text-gray-600">Criteria for senior software engineering roles</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Required Skills</span>
-                          <span className="font-medium">React, Node.js, TypeScript</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Experience Level</span>
-                          <span className="font-medium">5+ years</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Education</span>
-                          <span className="font-medium">Bachelor's or equivalent</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Used in Jobs</span>
-                          <Badge variant="outline">8 active</Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">Product Designer</h4>
-                          <p className="text-sm text-gray-600">Criteria for product design positions</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Required Skills</span>
-                          <span className="font-medium">Figma, Sketch, Prototyping</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Experience Level</span>
-                          <span className="font-medium">3+ years</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Portfolio</span>
-                          <span className="font-medium">Required</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Used in Jobs</span>
-                          <Badge variant="outline">3 active</Badge>
-                        </div>
-                      </div>
-                    </div>
+            {/* Criteria Sets List */}
+            <div className="space-y-4">
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Senior Developer Requirements</h3>
+                    <p className="text-sm text-gray-600">5 criteria • Last updated 2 days ago</p>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Matching Performance</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-medium text-green-800 mb-2">High Match Rate</h4>
-                      <p className="text-sm text-green-700 mb-3">
-                        Software Engineer criteria showing 85% average match rate
-                      </p>
-                      <div className="w-full bg-green-200 rounded-full h-2">
-                        <div className="bg-green-600 h-2 rounded-full" style={{ width: "85%" }}></div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-yellow-50 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-2">Medium Match Rate</h4>
-                      <p className="text-sm text-yellow-700 mb-3">
-                        Product Designer criteria showing 68% average match rate
-                      </p>
-                      <div className="w-full bg-yellow-200 rounded-full h-2">
-                        <div className="bg-yellow-600 h-2 rounded-full" style={{ width: "68%" }}></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">Criteria Effectiveness</h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Skills Matching</span>
-                          <span className="font-medium text-green-600">92%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Experience Level</span>
-                          <span className="font-medium text-green-600">88%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Education Requirements</span>
-                          <span className="font-medium text-yellow-600">74%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Location Preferences</span>
-                          <span className="font-medium text-red-600">56%</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-gray-600">
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                      Delete
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Education: Bachelor's+
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Experience: 5+ years
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Matching Score: ≥80%
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Age: 25-45
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Gender: Any
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Entry Level Filter</h3>
+                    <p className="text-sm text-gray-600">3 criteria • Last updated 1 week ago</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-gray-600">
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Education: Bachelor's
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Experience: 0-3 years
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Screening Score: ≥70%
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Remote Work Filter</h3>
+                    <p className="text-sm text-gray-600">4 criteria • Last updated 3 days ago</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-gray-600">
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Remote Work: Yes
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Time Zone: UTC-5 to UTC+2
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Experience: 3+ years
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                    Matching Score: ≥75%
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
         </TabsContent>
@@ -992,6 +1027,195 @@ export default function ApplicantEvaluationPage() {
       </Tabs>
       {showShortAnswerManager && (
         <ShortAnswerManager isOpen={showShortAnswerManager} onClose={() => setShowShortAnswerManager(false)} />
+      )}
+      {/* Create Criteria Set Modal */}
+      {showCreateCriteriaSetModal && (
+        <Dialog open={showCreateCriteriaSetModal} onOpenChange={setShowCreateCriteriaSetModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create Criteria Set</DialogTitle>
+              <DialogDescription>Define a set of criteria to filter and evaluate applicants</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Set Name</label>
+                <Input
+                  value={criteriaSetName}
+                  onChange={(e) => setCriteriaSetName(e.target.value)}
+                  placeholder="e.g., Senior Developer Requirements"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Select Criteria</label>
+                <div className="space-y-4">
+                  {allCriteria.map((criteria) => (
+                    <div key={criteria.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Checkbox
+                          checked={selectedCriteria.some((c) => c.id === criteria.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedCriteria([...selectedCriteria, { ...criteria, operator: "equal", value: "" }])
+                            } else {
+                              setSelectedCriteria(selectedCriteria.filter((c) => c.id !== criteria.id))
+                            }
+                          }}
+                        />
+                        <span className="font-medium">{criteria.name}</span>
+                      </div>
+
+                      {selectedCriteria.some((c) => c.id === criteria.id) && (
+                        <div className="ml-6 flex gap-3">
+                          {criteria.type === "select" ? (
+                            <Select
+                              value={selectedCriteria.find((c) => c.id === criteria.id)?.value || ""}
+                              onValueChange={(value) => {
+                                setSelectedCriteria(
+                                  selectedCriteria.map((c) => (c.id === criteria.id ? { ...c, value } : c)),
+                                )
+                              }}
+                            >
+                              <SelectTrigger className="w-48">
+                                <SelectValue placeholder="Select option" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {criteria.options?.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <>
+                              <Select
+                                value={selectedCriteria.find((c) => c.id === criteria.id)?.operator || "equal"}
+                                onValueChange={(operator) => {
+                                  setSelectedCriteria(
+                                    selectedCriteria.map((c) => (c.id === criteria.id ? { ...c, operator } : c)),
+                                  )
+                                }}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="equal">Equal to</SelectItem>
+                                  <SelectItem value="greater">Higher than</SelectItem>
+                                  <SelectItem value="less">Lower than</SelectItem>
+                                  <SelectItem value="between">Between</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                type="number"
+                                placeholder={`Value in ${criteria.unit}`}
+                                className="w-32"
+                                value={selectedCriteria.find((c) => c.id === criteria.id)?.value || ""}
+                                onChange={(e) => {
+                                  setSelectedCriteria(
+                                    selectedCriteria.map((c) =>
+                                      c.id === criteria.id ? { ...c, value: e.target.value } : c,
+                                    ),
+                                  )
+                                }}
+                              />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateCriteriaSetModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log("Creating criteria set:", { name: criteriaSetName, criteria: selectedCriteria })
+                  setShowCreateCriteriaSetModal(false)
+                  setCriteriaSetName("")
+                  setSelectedCriteria([])
+                }}
+              >
+                Create Set
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Custom Criteria Modal */}
+      {showCustomCriteriaModal && (
+        <Dialog open={showCustomCriteriaModal} onOpenChange={setShowCustomCriteriaModal}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Define Custom Criteria</DialogTitle>
+              <DialogDescription>Create custom criteria that can be used in your criteria sets</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Name</label>
+                <Input
+                  placeholder="e.g., Remote Work Preference"
+                  value={customCriteriaName}
+                  onChange={(e) => setCustomCriteriaName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Type</label>
+                <Select value={customCriteriaType} onValueChange={setCustomCriteriaType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="select">Multiple Choice</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="boolean">Yes/No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Options (for Multiple Choice)</label>
+                <Input
+                  placeholder="Enter options separated by commas"
+                  value={customCriteriaOptions}
+                  onChange={(e) => setCustomCriteriaOptions(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCustomCriteriaModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log("Creating custom criteria:", {
+                    name: customCriteriaName,
+                    type: customCriteriaType,
+                    options: customCriteriaOptions,
+                  })
+                  setShowCustomCriteriaModal(false)
+                  setCustomCriteriaName("")
+                  setCustomCriteriaType("")
+                  setCustomCriteriaOptions("")
+                }}
+              >
+                Create Criteria
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
