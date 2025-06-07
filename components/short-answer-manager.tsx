@@ -1,12 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Upload, Crown } from "lucide-react"
 import CreateShortAnswerForm from "./create-short-answer-form"
+import { useAuth } from "@/context/authContext"
+import { useToast } from "@/context/toastContext"
+import { onSnapshot, query, where } from "firebase/firestore"
+import { shortAnswerCollection } from "@/lib/api/firebase/collections"
+import ShortAnswerModel from "@/models/short-answer"
+import { deleteShortAnswer } from "@/lib/api/job/short-answer-service"
 
 interface ShortAnswerManagerProps {
     isOpen: boolean
@@ -16,52 +22,35 @@ interface ShortAnswerManagerProps {
 export default function ShortAnswerManager({ isOpen, onClose }: ShortAnswerManagerProps) {
     const [showCreateForm, setShowCreateForm] = useState(false)
     const [editingQuestion, setEditingQuestion] = useState<any>(null)
+    const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+    const [toDeleteID, setToDeleteID] = useState<string>("");
+    const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
-    // Sample short answer questions
-    const shortAnswerQuestions = [
-        {
-            id: "sa-1",
-            name: "Problem Solving Approach",
-            active: true,
-            question: "Describe a complex problem you faced in your previous role and how you approached solving it.",
-            wordLimit: 250,
-        },
-        {
-            id: "sa-2",
-            name: "Leadership Experience",
-            active: true,
-            question: "Provide an example of when you had to lead a team through a challenging situation.",
-            wordLimit: 200,
-        },
-        {
-            id: "sa-3",
-            name: "Technical Challenge",
-            active: false,
-            question: "Explain how you would architect a scalable web application that needs to handle millions of users.",
-            wordLimit: 300,
-        },
-        {
-            id: "sa-4",
-            name: "Career Motivation",
-            active: true,
-            question: "Why are you interested in this position and how does it align with your career goals?",
-            wordLimit: 150,
-        },
-    ]
+    const { user } = useAuth();
+    const { showToast } = useToast();
+
+    const [shortAnswerQuestions, setShortAnswerQuestions] = useState<ShortAnswerModel[]>([]);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user) {
+            const dataQuery = query(shortAnswerCollection, where("uid", "==", user.uid));
+            const unsubscribe = onSnapshot(dataQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => doc.data());
+                setShortAnswerQuestions(docs as unknown as ShortAnswerModel[]);
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
+        } else {
+            setShortAnswerQuestions([]);
+        }
+    }, []);
 
     const handleCreateNew = () => {
         setShowCreateForm(true)
     }
 
     const handleImport = () => {
-        alert("Import is a premium feature. Please upgrade to Pro to access this functionality.")
-    }
-
-    const handleSaveShortAnswer = (shortAnswer: any) => {
-        console.log("Saved short answer:", shortAnswer)
-        setShowCreateForm(false)
-        setEditingQuestion(null)
-        // Here you would add the new question to your list
+        showToast("Import is a premium feature. Please upgrade to Pro to access this functionality.", "Oops", "warning");
     }
 
     const handleEditQuestion = (question: any) => {
@@ -70,11 +59,24 @@ export default function ShortAnswerManager({ isOpen, onClose }: ShortAnswerManag
     }
 
     const handleDeleteQuestion = (questionId: string) => {
-        if (confirm("Are you sure you want to delete this short answer question?")) {
-            console.log("Deleting question:", questionId)
-            // Here you would implement the actual delete logic
-        }
+        setShowDeleteDialog(true);
+        setToDeleteID(questionId);
     }
+
+    const confirmDelete = async () => {
+        if (toDeleteID) {
+            console.log("Deleting question:", toDeleteID);
+            setDeleteLoading(true);
+
+            const res = await deleteShortAnswer(toDeleteID);
+            if (res) showToast("Deleted!", "Success", "success");
+            else showToast("Error deleting short answer. Please try again!", "Error", "error");
+
+            setShowDeleteDialog(false); // Close the confirmation dialog
+            setToDeleteID(""); // Reset the set to delete
+            setDeleteLoading(false);
+        }
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -145,9 +147,28 @@ export default function ShortAnswerManager({ isOpen, onClose }: ShortAnswerManag
                     setShowCreateForm(false)
                     setEditingQuestion(null)
                 }}
-                onSave={handleSaveShortAnswer}
                 editingQuestion={editingQuestion}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-gray-600">
+                        Are you sure you want to delete this multiple-choice set? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end mt-4 gap-2">
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={confirmDelete}>
+                            {deleteLoading ? "Deleting ..." : "Delete"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Dialog>
     )
 }

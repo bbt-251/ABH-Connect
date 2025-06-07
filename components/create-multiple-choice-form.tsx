@@ -194,9 +194,6 @@ export default function CreateMultipleChoiceForm({ isOpen, onClose, editingSet }
         }
 
         setLoading(false);
-
-        // onSave(multipleChoiceSet)
-        // onClose()
     }
 
     const handleAIGenerate = (params: any) => {
