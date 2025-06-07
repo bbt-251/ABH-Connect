@@ -52,6 +52,24 @@ const navigationItems = [
     premium: false,
   },
   {
+    name: "Exam Management",
+    href: "/company/exams",
+    icon: ClipboardCheck,
+    premium: false,
+  },
+  {
+    name: "Evaluation Metrics",
+    href: "/company/evaluation",
+    icon: BarChart3,
+    premium: false,
+  },
+  {
+    name: "Interview Management",
+    href: "/company/interviews",
+    icon: Users,
+    premium: false,
+  },
+  {
     name: "Candidate Pool",
     href: "/company/candidates",
     icon: Users,
