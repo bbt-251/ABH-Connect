@@ -592,14 +592,6 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button onClick={openCreateMultipleChoice}>
-                <Plus className="w-4 h-4 mr-1" />
-                Create
-              </Button>
-              <Button variant="outline">Import</Button>
-            </div>
-
             <div className="space-y-3">
               {multipleChoiceSets.map((set) => (
                 <div key={set.id} className="p-4 border border-gray-200 rounded-lg">
