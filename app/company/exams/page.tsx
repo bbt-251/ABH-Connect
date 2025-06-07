@@ -63,6 +63,8 @@ export default function ExamManagementPage() {
     },
   ])
 
+  const [customExamTypes, setCustomExamTypes] = useState<string[]>([])
+  const [newExamType, setNewExamType] = useState("")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingExam, setEditingExam] = useState<Exam | null>(null)
   const [formData, setFormData] = useState({
@@ -71,6 +73,8 @@ export default function ExamManagementPage() {
     status: "active" as "active" | "inactive",
     externalExams: [{ id: Date.now().toString(), type: "", name: "", weight: 0 }],
   })
+
+  const [showCustomTypeInput, setShowCustomTypeInput] = useState<string | null>(null)
 
   const handleCreateExam = () => {
     setFormData({
@@ -117,6 +121,13 @@ export default function ExamManagementPage() {
       ...formData,
       externalExams: formData.externalExams.map((exam) => (exam.id === examId ? { ...exam, [field]: value } : exam)),
     })
+  }
+
+  const handleAddCustomExamType = () => {
+    if (newExamType.trim() && !examTypes.includes(newExamType) && !customExamTypes.includes(newExamType)) {
+      setCustomExamTypes([...customExamTypes, newExamType])
+      setNewExamType("")
+    }
   }
 
   const handleSubmit = () => {
@@ -277,21 +288,73 @@ export default function ExamManagementPage() {
                   <div key={exam.id} className="flex gap-3 items-start p-4 border rounded-lg">
                     <div className="flex-1 grid grid-cols-3 gap-3">
                       <div>
-                        <Select
-                          value={exam.type}
-                          onValueChange={(value) => handleExternalExamChange(exam.id, "type", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Exam Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {examTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            <Select
+                              value={exam.type}
+                              onValueChange={(value) => handleExternalExamChange(exam.id, "type", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Exam Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {examTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                                {customExamTypes.map((type) => (
+                                  <SelectItem key={`custom-${type}`} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowCustomTypeInput(showCustomTypeInput === exam.id ? null : exam.id)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        {showCustomTypeInput === exam.id && (
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              value={newExamType}
+                              onChange={(e) => setNewExamType(e.target.value)}
+                              placeholder="Enter custom exam type"
+                              className="w-64"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                handleAddCustomExamType()
+                                setShowCustomTypeInput(null)
+                              }}
+                              disabled={
+                                !newExamType.trim() ||
+                                examTypes.includes(newExamType) ||
+                                customExamTypes.includes(newExamType)
+                              }
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowCustomTypeInput(null)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       <Input
