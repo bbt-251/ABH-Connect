@@ -107,21 +107,20 @@ export default function CompanyLayout({
         // fetch using onSnapshot from firebase to actively listen for changes
         if (user && userData?.company) {
             setProfile(userData.company);
+            const applicantRef = doc(db, "company", userData?.company?.id || "");
+            const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const fetchedProfile = snapshot.data() as CompanyModel;
+                    setProfile(fetchedProfile);
+                } else {
+                    setProfile(null);
+                }
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
         } else {
             setProfile(null);
         }
-
-        const applicantRef = doc(db, "company", userData?.company?.id || "");
-        const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const fetchedProfile = snapshot.data() as CompanyModel;
-                setProfile(fetchedProfile);
-            } else {
-                setProfile(null);
-            }
-        });
-
-        return () => unsubscribe(); // Cleanup the listener on unmount
     }, []);
 
     if (authLoading) {

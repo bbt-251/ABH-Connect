@@ -100,20 +100,20 @@ export default function ApplicantLayout({
         // fetch using onSnapshot from firebase to actively listen for changes
         if (user && userData?.applicant) {
             setProfile(userData.applicant);
+            const applicantRef = doc(db, "applicant", userData.applicant?.id || "");
+            const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const fetchedProfile = snapshot.data() as ApplicantModel;
+                    setProfile(fetchedProfile);
+                } else {
+                    setProfile(null);
+                }
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
         } else {
             setProfile(null);
         }
-        const applicantRef = doc(db, "applicant", profile?.id || "");
-        const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const fetchedProfile = snapshot.data() as ApplicantModel;
-                setProfile(fetchedProfile);
-            } else {
-                setProfile(null);
-            }
-        });
-
-        return () => unsubscribe(); // Cleanup the listener on unmount
     }, []);
 
     if (authLoading) {
