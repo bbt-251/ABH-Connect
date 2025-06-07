@@ -114,7 +114,7 @@ export default function ApplicantLayout({
         } else {
             setProfile(null);
         }
-    }, []);
+    }, [authLoading]);
 
     if (authLoading) {
         return <LoadingComponent />

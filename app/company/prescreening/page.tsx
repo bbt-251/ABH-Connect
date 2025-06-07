@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Plus, FileText, MessageSquare, Edit, Eye, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import CreateScreeningForm from "@/components/create-screening-form"
 import ShortAnswerManager from "@/components/short-answer-manager"
 import MultipleChoiceManager from "@/components/multiple-choice-manager"
+import { useAuth } from "@/context/authContext"
+import ScreeningQuestionModel from "@/models/screening-question"
+import { screeningQuestionCollection } from "@/lib/api/firebase/collections"
+import { query, where, onSnapshot } from "firebase/firestore"
+import { deleteScreeningQuestion } from "@/lib/api/job/screening-question-service"
+import { useToast } from "@/context/toastContext"
 
 export default function PrescreeningPage() {
     const [showCreateScreeningForm, setShowCreateScreeningForm] = useState(false)
@@ -34,6 +40,61 @@ export default function PrescreeningPage() {
     const [customCriteriaType, setCustomCriteriaType] = useState("")
     const [customCriteriaOptions, setCustomCriteriaOptions] = useState("")
 
+    const [editingQuestion, setEditingQuestion] = useState<ScreeningQuestionModel | null>(null);
+
+    const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+    const [toDeleteID, setToDeleteID] = useState<string>("");
+    const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+
+    const { user } = useAuth();
+    const { showToast } = useToast();
+
+    const [screeningQuestions, setScreeningQuestions] = useState<ScreeningQuestionModel[]>([]);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user) {
+            const dataQuery = query(screeningQuestionCollection, where("uid", "==", user.uid));
+            const unsubscribe = onSnapshot(dataQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => doc.data());
+                setScreeningQuestions(docs as unknown as ScreeningQuestionModel[]);
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
+        } else {
+            setScreeningQuestions([]);
+        }
+    }, []);
+
+    const handleEdit = (question: ScreeningQuestionModel) => {
+        setEditingQuestion(question);
+        setShowCreateScreeningForm(true);
+    }
+
+    const handleView = (question: any) => {
+        // setEditingQuestion(question)
+        // setShowCreateForm(true)
+    }
+
+    const handleDelete = (questionId: string) => {
+        setShowDeleteDialog(true);
+        setToDeleteID(questionId);
+    }
+
+    const confirmDelete = async () => {
+        if (toDeleteID) {
+            console.log("Deleting question:", toDeleteID);
+            setDeleteLoading(true);
+
+            const res = await deleteScreeningQuestion(toDeleteID);
+            if (res) showToast("Deleted!", "Success", "success");
+            else showToast("Error deleting screening question. Please try again!", "Error", "error");
+
+            setShowDeleteDialog(false); // Close the confirmation dialog
+            setToDeleteID(""); // Reset the set to delete
+            setDeleteLoading(false);
+        }
+    };
+
     return (
         <div className="container mx-auto py-10">
             <div className="mb-8">
@@ -45,7 +106,11 @@ export default function PrescreeningPage() {
 
             {/* Create Screening Form Modal */}
             {showCreateScreeningForm && (
-                <CreateScreeningForm isOpen={showCreateScreeningForm} onClose={() => setShowCreateScreeningForm(false)} />
+                <CreateScreeningForm
+                    isOpen={showCreateScreeningForm}
+                    onClose={() => setShowCreateScreeningForm(false)}
+                    editingQuestion={editingQuestion}
+                />
             )}
 
             {/* Short Answer Manager Modal */}
@@ -89,57 +154,74 @@ export default function PrescreeningPage() {
 
                                     {/* Screening Question Sets List */}
                                     <div className="space-y-3">
-                                        <div className="p-4 border border-gray-200 rounded-lg">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-gray-900">Software Engineer Technical Screening</h4>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        Comprehensive screening for software engineering positions including technical skills and
-                                                        experience
-                                                    </p>
+                                        {screeningQuestions.map((questionSet) => (
+                                            <div key={questionSet.id} className="p-4 border border-gray-200 rounded-lg">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-medium text-gray-900">{questionSet.name}</h4>
+                                                        <p className="text-sm text-gray-600 mt-1">
+                                                            {questionSet.active
+                                                                ? "This screening set is currently active."
+                                                                : "This screening set is currently inactive."}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="outline" className={questionSet.active ? "text-green-600" : "text-gray-600"}>
+                                                            {questionSet.active ? "Active" : "Inactive"}
+                                                        </Badge>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(questionSet)}>
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleView(questionSet)}>
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleDelete(questionSet.id)}>
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="text-green-600">
-                                                        Active
-                                                    </Badge>
-                                                    <Button variant="ghost" size="sm">
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="sm">
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="sm">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                                                    <div>
+                                                        <span className="text-gray-500">Multiple Choice Sets:</span>
+                                                        <span className="ml-2 font-medium">
+                                                            {questionSet.multipleChoiceQuestions.length} set
+                                                            {questionSet.multipleChoiceQuestions.length !== 1 ? "s" : ""}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">Short Answer Questions:</span>
+                                                        <span className="ml-2 font-medium">
+                                                            {questionSet.shortAnswerQuestions.length} question
+                                                            {questionSet.shortAnswerQuestions.length !== 1 ? "s" : ""}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">Est. Time:</span>
+                                                        <span className="ml-2 font-medium">{questionSet.timerEnabled ? `${questionSet.timer} minutes` : "N/A"}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">Used in Jobs:</span>
+                                                        {/* <span className="ml-2 font-medium">{questionSet.usedInJobs || "No active positions"}</span> */}
+                                                        <span className="ml-2 font-medium">0</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 text-xs">
+                                                    {questionSet.multipleChoiceQuestions.map((mcq, index) => (
+                                                        <Badge key={index} variant="secondary">
+                                                            {mcq.title}
+                                                        </Badge>
+                                                    ))}
+                                                    {questionSet.shortAnswerQuestions.map((saq, index) => (
+                                                        <Badge key={index} variant="secondary">
+                                                            {saq.title}
+                                                        </Badge>
+                                                    ))}
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                                                <div>
-                                                    <span className="text-gray-500">Multiple Choice Sets:</span>
-                                                    <span className="ml-2 font-medium">2 sets (Technical Skills, Work Environment)</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-500">Short Answer Questions:</span>
-                                                    <span className="ml-2 font-medium">3 questions (Problem Solving, Leadership, Technical)</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-500">Est. Time:</span>
-                                                    <span className="ml-2 font-medium">15 minutes</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-500">Used in Jobs:</span>
-                                                    <span className="ml-2 font-medium">12 active positions</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2 text-xs">
-                                                <Badge variant="secondary">Technical Skills Assessment</Badge>
-                                                <Badge variant="secondary">Work Environment Preferences</Badge>
-                                                <Badge variant="secondary">Problem Solving Approach</Badge>
-                                                <Badge variant="secondary">+2 more</Badge>
-                                            </div>
-                                        </div>
+                                        ))}
                                     </div>
-                                    <div className="space-y-3">
+
+                                    {/* <div className="space-y-3">
                                         <div className="p-4 border border-gray-200 rounded-lg">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
@@ -186,7 +268,7 @@ export default function PrescreeningPage() {
                                                 <Badge variant="secondary">Empathy Assessment</Badge>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </TabsContent>
 
@@ -594,6 +676,26 @@ export default function PrescreeningPage() {
                     </DialogContent>
                 </Dialog>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-gray-600">
+                        Are you sure you want to delete this multiple-choice set? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end mt-4 gap-2">
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" disabled={deleteLoading} onClick={confirmDelete}>
+                            {deleteLoading ? "Deleting ..." : "Delete"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

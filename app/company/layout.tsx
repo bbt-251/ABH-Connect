@@ -107,8 +107,8 @@ export default function CompanyLayout({
         // fetch using onSnapshot from firebase to actively listen for changes
         if (user && userData?.company) {
             setProfile(userData.company);
-            const applicantRef = doc(db, "company", userData?.company?.id || "");
-            const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
+            const companyRef = doc(db, "company", userData?.company?.id || "");
+            const unsubscribe = onSnapshot(companyRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const fetchedProfile = snapshot.data() as CompanyModel;
                     setProfile(fetchedProfile);
@@ -121,7 +121,7 @@ export default function CompanyLayout({
         } else {
             setProfile(null);
         }
-    }, []);
+    }, [authLoading]);
 
     if (authLoading) {
         return <LoadingComponent />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,15 +9,17 @@ import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Plus, Trash2, Settings, X } from "lucide-react"
-
-interface MultipleChoice {
-    id: string;
-    name: string;
-    active: boolean;
-    questions: Question[];
-    correctAnswer: number;
-}
+import { Plus, Trash2, Settings, X, AlertCircle } from "lucide-react"
+import { useToast } from "@/context/toastContext"
+import { useAuth } from "@/context/authContext"
+import { multipleChoiceCollection, shortAnswerCollection } from "@/lib/api/firebase/collections"
+import MultipleChoiceModel from "@/models/multiple-choice"
+import { query, where, onSnapshot } from "firebase/firestore"
+import ShortAnswerModel from "@/models/short-answer"
+import ScreeningQuestionModel from "@/models/screening-question"
+import dayjs from "dayjs"
+import { timestampFormat } from "@/lib/api/dayjs_format"
+import { createScreeningQuestion, updateScreeningQuestion } from "@/lib/api/job/screening-question-service"
 
 interface Question {
     id: string
@@ -30,11 +32,12 @@ interface Question {
 }
 
 interface CreateScreeningFormProps {
-    isOpen: boolean
-    onClose: () => void
+    isOpen: boolean;
+    onClose: () => void;
+    editingQuestion: ScreeningQuestionModel | null;
 }
 
-export default function CreateScreeningForm({ isOpen, onClose }: CreateScreeningFormProps) {
+export default function CreateScreeningForm({ isOpen, onClose, editingQuestion }: CreateScreeningFormProps) {
     const [formData, setFormData] = useState({
         name: "",
         active: true,
@@ -43,45 +46,75 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
         timer: 30,
     })
 
-    const [questions, setQuestions] = useState<Question[]>([])
+    const [questions, setQuestions] = useState<Question[]>([]);
 
-    const [predefinedShortAnswers] = useState([
-        {
-            id: "sa1",
-            title: "Describe your experience with project management",
-            description: "Open-ended question about PM experience",
-        },
-        { id: "sa2", title: "What motivates you in your career?", description: "Personal motivation assessment" },
-        { id: "sa3", title: "Describe a challenging situation you overcame", description: "Problem-solving evaluation" },
-        { id: "sa4", title: "What are your long-term career goals?", description: "Career planning assessment" },
-    ])
+    useEffect(() => {
+        if (editingQuestion && isOpen) {
+            setFormData({
+                name: editingQuestion.name,
+                active: editingQuestion.active,
+                passingScore: editingQuestion.passingScore,
+                timerOption: editingQuestion.timerEnabled,
+                timer: editingQuestion.timer,
+            });
 
-    const [predefinedMultipleChoice] = useState([
-        {
-            id: "mc1",
-            title: "Years of experience in the field",
-            description: "Experience level assessment",
-            options: ["0-1 years", "2-3 years", "4-5 years", "5+ years"],
-        },
-        {
-            id: "mc2",
-            title: "Preferred work environment",
-            description: "Work style preference",
-            options: ["Remote", "Hybrid", "On-site", "Flexible"],
-        },
-        {
-            id: "mc3",
-            title: "Technical proficiency level",
-            description: "Self-assessment of technical skills",
-            options: ["Beginner", "Intermediate", "Advanced", "Expert"],
-        },
-        {
-            id: "mc4",
-            title: "Team size preference",
-            description: "Preferred team size",
-            options: ["Solo work", "Small team (2-5)", "Medium team (6-10)", "Large team (10+)"],
-        },
-    ])
+            setQuestions([
+                ...editingQuestion.multipleChoiceQuestions.map(q => ({
+                    id: q.id,
+                    type: "multiple-choice" as any,
+                    questionId: q.id,
+                    title: q.title,
+                    weight: q.weight,
+                })),
+                ...editingQuestion.shortAnswerQuestions.map(q => ({
+                    id: q.id,
+                    type: "short-answer" as any,
+                    questionId: q.id,
+                    title: q.title,
+                    weight: q.weight,
+                    gradingSeverity: q.gradingSeverity,
+                })),
+            ]);
+        }
+    }, [editingQuestion, isOpen]);
+
+    const [loading, setLoading] = useState<boolean>(false);
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+    const { user } = useAuth();
+    const { showToast } = useToast();
+
+    const [multipleChoiceSets, setMultipleChoiceSets] = useState<MultipleChoiceModel[]>([]);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user) {
+            const dataQuery = query(multipleChoiceCollection, where("uid", "==", user.uid));
+            const unsubscribe = onSnapshot(dataQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => doc.data());
+                setMultipleChoiceSets((docs as unknown as MultipleChoiceModel[]).filter(doc => doc.active));
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
+        } else {
+            setMultipleChoiceSets([]);
+        }
+    }, []);
+
+    const [shortAnswerQuestions, setShortAnswerQuestions] = useState<ShortAnswerModel[]>([]);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user) {
+            const dataQuery = query(shortAnswerCollection, where("uid", "==", user.uid));
+            const unsubscribe = onSnapshot(dataQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => doc.data());
+                setShortAnswerQuestions((docs as unknown as ShortAnswerModel[]).filter(doc => doc.active));
+            });
+
+            return () => unsubscribe(); // Cleanup the listener on unmount
+        } else {
+            setShortAnswerQuestions([]);
+        }
+    }, []);
 
     const [showQuestionSelector, setShowQuestionSelector] = useState(false)
     const [selectorType, setSelectorType] = useState<"short-answer" | "multiple-choice" | null>(null)
@@ -92,49 +125,8 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
     const [gradingSeverity, setGradingSeverity] = useState([50])
 
     const [showMultipleChoiceManager, setShowMultipleChoiceManager] = useState(false)
-    const [showCreateMultipleChoice, setShowCreateMultipleChoice] = useState(false)
     const [showAIGenerator, setShowAIGenerator] = useState(false)
-    const [multipleChoiceSets, setMultipleChoiceSets] = useState([
-        {
-            id: "mc-set-1",
-            name: "Technical Skills Assessment",
-            active: true,
-            questions: [
-                {
-                    id: "q1",
-                    question: "What is the primary purpose of version control?",
-                    choices: ["Track changes", "Backup files", "Share code", "Debug code"],
-                    correctAnswer: 0,
-                },
-                {
-                    id: "q2",
-                    question: "Which programming paradigm focuses on objects?",
-                    choices: ["Functional", "Object-Oriented", "Procedural", "Logic"],
-                    correctAnswer: 1,
-                },
-            ],
-        },
-        {
-            id: "mc-set-2",
-            name: "Communication Skills",
-            active: true,
-            questions: [
-                {
-                    id: "q3",
-                    question: "What is the most effective way to handle conflict?",
-                    choices: ["Avoid it", "Confront aggressively", "Listen and collaborate", "Delegate to others"],
-                    correctAnswer: 2,
-                },
-            ],
-        },
-    ]);
 
-    const [currentMultipleChoice, setCurrentMultipleChoice] = useState({
-        id: "",
-        name: "",
-        active: true,
-        questions: [] as { id: string; question: string; choices: string[]; correctAnswer: number }[],
-    })
     const [aiGenerationForm, setAiGenerationForm] = useState({
         numberOfQuestions: "",
         numberOfChoices: "",
@@ -142,94 +134,10 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
         complexityLevel: "",
     })
 
-    const [selectedMultipleChoiceSets, setSelectedMultipleChoiceSets] = useState<string[]>([])
-
     const openQuestionSelector = (type: "short-answer" | "multiple-choice") => {
-        if (type === "multiple-choice") {
-            setShowMultipleChoiceManager(true)
-        } else {
-            setSelectorType(type)
-            setSelectedQuestions([])
-            setShowQuestionSelector(true)
-        }
-    }
-
-    const openCreateMultipleChoice = () => {
-        setCurrentMultipleChoice({ id: "", name: "", active: true, questions: [], })
-        setShowCreateMultipleChoice(true)
-    }
-
-    const addQuestionToSet = () => {
-        const newQuestion = {
-            id: Math.random().toString(36).substr(2, 9),
-            question: "",
-            choices: [],
-            correctAnswer: 0,
-        }
-        setCurrentMultipleChoice((prev) => ({
-            ...prev,
-            questions: [...prev.questions, newQuestion],
-        }))
-    }
-
-    const removeQuestionFromSet = (questionId: string) => {
-        setCurrentMultipleChoice((prev) => ({
-            ...prev,
-            questions: prev.questions.filter((q) => q.id !== questionId),
-        }))
-    }
-
-    const updateQuestion = (questionId: string, field: string, value: any) => {
-        setCurrentMultipleChoice((prev) => ({
-            ...prev,
-            questions: prev.questions.map((q) => (q.id === questionId ? { ...q, [field]: value } : q)),
-        }))
-    }
-
-    const updateChoice = (questionId: string, choiceIndex: number, value: string) => {
-        setCurrentMultipleChoice((prev) => ({
-            ...prev,
-            questions: prev.questions.map((q) =>
-                q.id === questionId ? { ...q, choices: (q.choices ?? []).map((c, i) => (i === choiceIndex ? value : c)) } : q,
-            ),
-        }))
-    }
-
-    const saveMultipleChoiceSet = () => {
-        if (currentMultipleChoice.name.trim()) {
-            const newSet = {
-                ...currentMultipleChoice,
-                id: Math.random().toString(36).substr(2, 9),
-            }
-            setMultipleChoiceSets((prev) => [...prev, newSet])
-            setMultipleChoiceSets((prev) => [
-                ...prev,
-                {
-                    ...newSet,
-                    questions: newSet.questions.map((q) => ({
-                        id: q.id,
-                        question: q.question || "",
-                        choices: q.choices || [],
-                        correctAnswer: q.correctAnswer || 0,
-                    })),
-                },
-            ])
-        }
-    }
-
-    const selectMultipleChoiceSet = (setId: string) => {
-        const selectedSet = multipleChoiceSets.find((set) => set.id === setId)
-        if (selectedSet) {
-            const newQuestion: Question = {
-                id: Math.random().toString(36).substr(2, 9),
-                type: "multiple-choice",
-                questionId: setId,
-                title: selectedSet.name,
-                weight: 10,
-            }
-            setQuestions([...questions, newQuestion])
-            setShowMultipleChoiceManager(false)
-        }
+        setSelectedQuestions([]);
+        setSelectorType(type);
+        setShowQuestionSelector(true);
     }
 
     const generateWithAI = () => {
@@ -239,11 +147,107 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
         setShowAIGenerator(false)
     }
 
-    const handleSubmit = () => {
-        // Handle form submission here
-        console.log("Form Data:", formData)
-        console.log("Questions:", questions)
-        onClose()
+    const resetFields = () => {
+        setFormData({
+            active: true,
+            name: "",
+            passingScore: 70,
+            timer: 30,
+            timerOption: false
+        });
+        setQuestions([]);
+    }
+
+    const validateScreeningQuestions = () => {
+        setValidationErrors([]);
+
+        const errors: string[] = [];
+
+        // 1. Name is required
+        if (!formData.name.trim()) {
+            errors.push("The name field is required.");
+        }
+
+        // 2. Passing score is required
+        if (formData.passingScore === null || formData.passingScore === undefined) {
+            errors.push("The passing score is required.");
+        }
+
+        // 3. If timer option is enabled, timer must be entered and it can't be less than 5
+        if (formData.timerOption && (formData.timer === null || formData.timer < 5)) {
+            errors.push("If the timer option is enabled, the timer must be at least 5 minutes.");
+        }
+
+        // 4. At least 1 question must be associated
+        if (questions.length === 0) {
+            errors.push("At least one question must be associated (either short answer or multiple choice).");
+        }
+
+        // 5. Total weight must be 100
+        const totalWeight = questions.reduce((sum, q) => sum + q.weight, 0);
+        if (totalWeight !== 100) {
+            errors.push("The total weight of all questions must equal 100%.");
+        }
+
+        return errors;
+    };
+
+    const handleSubmit = async () => {
+
+        const errors = validateScreeningQuestions();
+
+        if (errors.length > 0) {
+            setValidationErrors(errors); // Display errors to the user
+            return;
+        }
+
+        const screeningQuestion: Omit<ScreeningQuestionModel, "id"> = {
+            timestamp: dayjs().format(timestampFormat),
+            uid: user?.uid ?? "",
+            active: formData.active,
+            passingScore: formData.passingScore,
+            name: formData.name,
+            timer: formData.timer,
+            timerEnabled: formData.timerOption,
+            multipleChoiceQuestions: questions.filter(q => q.type === "multiple-choice").map(q => ({
+                id: q.questionId,
+                title: q.title,
+                weight: q.weight,
+            })),
+            shortAnswerQuestions: questions.filter(q => q.type === "short-answer").map(q => ({
+                id: q.questionId,
+                title: q.title,
+                weight: q.weight,
+                gradingSeverity: q.gradingSeverity ?? 50,
+            })),
+        };
+
+        console.log("screeningQuestion: ", screeningQuestion);
+
+        setLoading(true);
+
+        if (editingQuestion !== null) {
+            screeningQuestion.timestamp = editingQuestion.timestamp;
+            const res = await updateScreeningQuestion({ ...screeningQuestion, id: editingQuestion.id });
+            if (res !== null) {
+                showToast(`Screening question ${screeningQuestion.name} has been updated successfully`, "Success", "success");
+                resetFields();
+                onClose();
+            }
+            else showToast("Error updating screening question. Please try again.", "Error", "error");
+        }
+        else {
+            const res = await createScreeningQuestion(screeningQuestion);
+            if (res !== null) {
+                showToast(`Screening question ${screeningQuestion.name} has been created successfully`, "Success", "success");
+                resetFields();
+                onClose();
+            }
+            else showToast("Error creating screening question. Please try again.", "Error", "error");
+        }
+
+        setLoading(false);
+        onClose();
     }
 
     const totalWeight = questions.reduce((sum, q) => sum + q.weight, 0)
@@ -282,14 +286,15 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
 
     const addSelectedQuestions = () => {
         if (selectorType === "short-answer") {
-            const newQuestions = predefinedShortAnswers
+            const newQuestions = shortAnswerQuestions
                 .filter((sa) => selectedQuestions.includes(sa.id))
                 .map((sa) => ({
                     id: Math.random().toString(36).substr(2, 9),
                     type: "short-answer",
                     questionId: sa.id,
-                    title: sa.title,
+                    title: sa.question,
                     weight: 10,
+                    gradingSeverity: gradingSeverity[0],
                 }))
             setQuestions((prev) => [
                 ...prev,
@@ -299,13 +304,13 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                 })),
             ])
         } else if (selectorType === "multiple-choice") {
-            const newQuestions = predefinedMultipleChoice
+            const newQuestions = multipleChoiceSets
                 .filter((mc) => selectedQuestions.includes(mc.id))
                 .map((mc) => ({
                     id: Math.random().toString(36).substr(2, 9),
                     type: "multiple-choice",
                     questionId: mc.id,
-                    title: mc.title,
+                    title: mc.name,
                     weight: 10,
                 }))
             setQuestions((prev) => [
@@ -324,8 +329,30 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Create Screening Question Set</DialogTitle>
+                        <DialogTitle>{editingQuestion === null ? "Create " : "Edit "} Screening Question Set</DialogTitle>
                     </DialogHeader>
+
+                    {validationErrors.length > 0 &&
+                        <div className="max-w p-3">
+                            {/* Validation Errors */}
+                            {validationErrors.length > 0 && (
+                                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <h4 className="text-sm font-medium text-red-800 mb-2 flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" />
+                                        Please fix the following errors:
+                                    </h4>
+                                    <ul className="text-sm text-red-700 space-y-1">
+                                        {validationErrors.map((error, index) => (
+                                            <li key={index} className="flex items-center gap-2">
+                                                <div className="w-1 h-1 bg-red-500 rounded-full flex-shrink-0" />
+                                                {error}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    }
 
                     <div className="space-y-6">
                         {/* Basic Information */}
@@ -449,7 +476,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                                                             <Label>Grading Severity</Label>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-sm text-gray-500">
-                                                                    Current: {question.gradingSeverity || 50}%
+                                                                    Current: {question.gradingSeverity}%
                                                                 </span>
                                                                 <Button variant="outline" size="sm" onClick={() => openGradeTuner(question.id)}>
                                                                     <Settings className="w-4 h-4 mr-1" />
@@ -483,7 +510,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                             <Button variant="outline" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button onClick={handleSubmit}>Create Screening Set</Button>
+                            <Button onClick={handleSubmit} disabled={loading}>{loading ? "Saving ..." : "Save"}</Button>
                         </div>
                     </div>
                 </DialogContent>
@@ -495,9 +522,6 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                     <DialogHeader>
                         <div className="flex justify-between items-center">
                             <DialogTitle>Choose Grading Severity</DialogTitle>
-                            <Button variant="ghost" size="sm" onClick={() => setShowGradeTuner(false)}>
-                                <X className="w-4 h-4" />
-                            </Button>
                         </div>
                     </DialogHeader>
 
@@ -513,7 +537,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                                     value={gradingSeverity}
                                     onValueChange={setGradingSeverity}
                                     max={100}
-                                    min={0}
+                                    min={1}
                                     step={1}
                                     className="w-full"
                                 />
@@ -534,7 +558,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                 </DialogContent>
             </Dialog>
 
-            {/* Question Selector Modal */}
+            {/* Short Answer Selector Modal */}
             <Dialog open={showQuestionSelector} onOpenChange={setShowQuestionSelector}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
@@ -545,7 +569,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
 
                     <div className="space-y-4 max-h-96 overflow-y-auto">
                         {selectorType === "short-answer"
-                            ? predefinedShortAnswers.map((question) => (
+                            ? shortAnswerQuestions.map((question) => (
                                 <div
                                     key={question.id}
                                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedQuestions.includes(question.id)
@@ -562,13 +586,13 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                                             className="mt-1"
                                         />
                                         <div className="flex-1">
-                                            <h4 className="font-medium mb-1">{question.title}</h4>
-                                            <p className="text-sm text-gray-600">{question.description}</p>
+                                            <h4 className="font-medium mb-1">{question.question}</h4>
+                                            {/* <p className="text-sm text-gray-600">{question.description}</p> */}
                                         </div>
                                     </div>
                                 </div>
                             ))
-                            : predefinedMultipleChoice.map((question) => (
+                            : multipleChoiceSets.map((question) => (
                                 <div
                                     key={question.id}
                                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedQuestions.includes(question.id)
@@ -585,15 +609,15 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                                             className="mt-1"
                                         />
                                         <div className="flex-1">
-                                            <h4 className="font-medium mb-1">{question.title}</h4>
+                                            <h4 className="font-medium mb-1">{question.name}</h4>
                                             <p className="text-sm text-gray-600 mb-2">{question.description}</p>
-                                            <div className="flex flex-wrap gap-1">
+                                            {/* <div className="flex flex-wrap gap-1">
                                                 {question.options.map((option, idx) => (
                                                     <Badge key={idx} variant="secondary" className="text-xs">
                                                         {option}
                                                     </Badge>
                                                 ))}
-                                            </div>
+                                            </div> */}
                                         </div>
                                     </div>
                                 </div>
@@ -617,7 +641,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
             </Dialog>
 
             {/* Multiple Choice Manager Modal */}
-            <Dialog open={showMultipleChoiceManager} onOpenChange={setShowMultipleChoiceManager}>
+            {/* <Dialog open={showMultipleChoiceManager} onOpenChange={setShowMultipleChoiceManager}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Multiple Choice Management</DialogTitle>
@@ -690,98 +714,7 @@ export default function CreateScreeningForm({ isOpen, onClose }: CreateScreening
                         </Button>
                     </div>
                 </DialogContent>
-            </Dialog>
-
-            {/* Create Multiple Choice Modal */}
-            <Dialog open={showCreateMultipleChoice} onOpenChange={setShowCreateMultipleChoice}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Create Multiple Choice Set</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label>Name</Label>
-                                <Input
-                                    value={currentMultipleChoice.name}
-                                    onChange={(e) => setCurrentMultipleChoice((prev) => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Enter multiple choice set name"
-                                />
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    checked={currentMultipleChoice.active}
-                                    onCheckedChange={(checked) => setCurrentMultipleChoice((prev) => ({ ...prev, active: checked }))}
-                                />
-                                <Label>Active</Label>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-medium">Questions</h3>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={addQuestionToSet}>
-                                        <Plus className="w-4 h-4 mr-1" />
-                                        Add Question
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => setShowAIGenerator(true)}>
-                                        Generate with AI
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {currentMultipleChoice.questions.map((question, index) => (
-                                <Card key={question.id}>
-                                    <CardContent className="p-4">
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <Label>Question {index + 1}</Label>
-                                                <Button variant="ghost" size="sm" onClick={() => removeQuestionFromSet(question.id)}>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-
-                                            <Input
-                                                value={question.question}
-                                                onChange={(e) => updateQuestion(question.id, "question", e.target.value)}
-                                                placeholder="Enter your question"
-                                            />
-
-                                            <div className="space-y-2">
-                                                <Label>Answer Choices</Label>
-                                                {question.choices.map((choice, choiceIndex) => (
-                                                    <div key={choiceIndex} className="flex items-center gap-2">
-                                                        <input
-                                                            type="radio"
-                                                            name={`correct-${question.id}`}
-                                                            checked={question.correctAnswer === choiceIndex}
-                                                            onChange={() => updateQuestion(question.id, "correctAnswer", choiceIndex)}
-                                                        />
-                                                        <Input
-                                                            value={choice}
-                                                            onChange={(e) => updateChoice(question.id, choiceIndex, e.target.value)}
-                                                            placeholder={`Choice ${choiceIndex + 1}`}
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setShowCreateMultipleChoice(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={saveMultipleChoiceSet}>Save Multiple Choice Set</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            </Dialog> */}
 
             {/* AI Generator Modal */}
             <Dialog open={showAIGenerator} onOpenChange={setShowAIGenerator}>
