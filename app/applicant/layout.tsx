@@ -2,12 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import LoadingComponent from "@/components/loading"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,26 +13,31 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Unauthorized from "@/components/unauthorized"
+import { useAuth } from "@/context/authContext"
+import { useToast } from "@/context/toastContext"
+import { db } from "@/lib/api/firebase/init"
+import ApplicantModel from "@/models/applicant"
+import { doc, onSnapshot } from "firebase/firestore"
 import {
-    LayoutDashboard,
-    FileText,
-    User,
-    MessageSquare,
-    FileCheck,
-    GraduationCap,
-    Users,
     Bell,
-    Settings,
+    Crown,
+    FileCheck,
+    FileText,
+    GraduationCap,
+    LayoutDashboard,
     LogOut,
     Menu,
-    X,
-    Crown,
-    Loader,
+    MessageSquare,
+    Settings,
+    User,
+    Users,
+    X
 } from "lucide-react"
-import { useAuth } from "@/context/authContext"
-import LoadingComponent from "@/components/loading"
-import Unauthorized from "@/components/unauthorized"
-import { useToast } from "@/context/toastContext"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const navigationItems = [
     {
@@ -90,8 +92,29 @@ export default function ApplicantLayout({
     const pathname = usePathname()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [showPremiumModal, setShowPremiumModal] = useState(false)
-    const { authLoading, userData, signout } = useAuth();
+    const { authLoading, user, userData, signout } = useAuth();
     const { showToast } = useToast();
+
+    const [profile, setProfile] = useState<ApplicantModel | null>(null);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user && userData?.applicant) {
+            setProfile(userData.applicant);
+        } else {
+            setProfile(null);
+        }
+        const applicantRef = doc(db, "applicant", profile?.id || "");
+        const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const fetchedProfile = snapshot.data() as ApplicantModel;
+                setProfile(fetchedProfile);
+            } else {
+                setProfile(null);
+            }
+        });
+
+        return () => unsubscribe(); // Cleanup the listener on unmount
+    }, []);
 
     if (authLoading) {
         return <LoadingComponent />
@@ -180,16 +203,16 @@ export default function ApplicantLayout({
                     <div className="p-4 border-t border-gray-200 flex-shrink-0">
                         <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src={`${userData?.applicant?.photo}`} />
+                                <AvatarImage src={`${profile?.photo}`} />
                                 <AvatarFallback>
-                                    {userData?.applicant?.firstName
-                                        ? userData.applicant.firstName.charAt(0).toUpperCase()
+                                    {profile?.firstName
+                                        ? profile?.firstName.charAt(0).toUpperCase()
                                         : ""}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium leading-none">{userData?.applicant?.firstName} {userData?.applicant?.surname}</p>
-                                <p className="text-xs leading-none text-muted-foreground mt-1">{userData?.applicant?.email}</p>
+                                <p className="text-sm font-medium leading-none">{profile?.firstName} {profile?.surname}</p>
+                                <p className="text-xs leading-none text-muted-foreground mt-1">{profile?.email}</p>
                             </div>
                         </div>
                     </div>
@@ -224,10 +247,10 @@ export default function ApplicantLayout({
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={`${userData?.applicant?.photo}`} />
+                                                <AvatarImage src={`${profile?.photo}`} />
                                                 <AvatarFallback>
-                                                    {userData?.applicant?.firstName
-                                                        ? userData.applicant.firstName.charAt(0).toUpperCase()
+                                                    {profile?.firstName
+                                                        ? profile?.firstName.charAt(0).toUpperCase()
                                                         : ""}
                                                 </AvatarFallback>
                                             </Avatar>
@@ -236,8 +259,8 @@ export default function ApplicantLayout({
                                     <DropdownMenuContent className="w-60 py-5 px-2" align="end" forceMount>
                                         <DropdownMenuLabel className="font-normal">
                                             <div className="flex flex-col space-y-1">
-                                                <p className="text-sm font-medium leading-none">{userData?.applicant?.firstName} {userData?.applicant?.surname}</p>
-                                                <p className="text-xs leading-none text-muted-foreground mt-1">{userData?.applicant?.email}</p>
+                                                <p className="text-sm font-medium leading-none">{profile?.firstName} {profile?.surname}</p>
+                                                <p className="text-xs leading-none text-muted-foreground mt-1">{profile?.email}</p>
                                             </div>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />

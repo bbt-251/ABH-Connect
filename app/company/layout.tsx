@@ -1,12 +1,8 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import LoadingComponent from "@/components/loading"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,27 +11,33 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-    LayoutDashboard,
-    FileText,
-    ClipboardCheck,
-    Users,
-    MessageSquare,
-    GraduationCap,
-    BarChart3,
-    Bell,
-    Settings,
-    LogOut,
-    Menu,
-    X,
-    Crown,
-    Building,
-    User,
-} from "lucide-react"
+import Unauthorized from "@/components/unauthorized"
 import { useAuth } from "@/context/authContext"
 import { useToast } from "@/context/toastContext"
-import LoadingComponent from "@/components/loading"
-import Unauthorized from "@/components/unauthorized"
+import { db } from "@/lib/api/firebase/init"
+import CompanyModel from "@/models/company"
+import { doc, onSnapshot } from "firebase/firestore"
+import {
+    BarChart3,
+    Bell,
+    ClipboardCheck,
+    Crown,
+    FileText,
+    GraduationCap,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Settings,
+    User,
+    Users,
+    X
+} from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type React from "react"
+import { useEffect, useState } from "react"
 
 const navigationItems = [
     {
@@ -51,7 +53,7 @@ const navigationItems = [
         premium: false,
     },
     {
-        name: "Pre-screening tools",
+        name: "Applicant Evaluation",
         href: "/company/prescreening",
         icon: ClipboardCheck,
         premium: false,
@@ -60,6 +62,12 @@ const navigationItems = [
         name: "Candidate Pool",
         href: "/company/candidates",
         icon: Users,
+        premium: false,
+    },
+    {
+        name: "Profile Management",
+        href: "/company/profile",
+        icon: User,
         premium: false,
     },
     {
@@ -91,8 +99,30 @@ export default function CompanyLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [showPremiumModal, setShowPremiumModal] = useState(false)
 
-    const { authLoading, userData, signout } = useAuth();
+    const { authLoading, user, userData, signout } = useAuth();
     const { showToast } = useToast();
+
+    const [profile, setProfile] = useState<CompanyModel | null>(null);
+    useEffect(() => {
+        // fetch using onSnapshot from firebase to actively listen for changes
+        if (user && userData?.company) {
+            setProfile(userData.company);
+        } else {
+            setProfile(null);
+        }
+
+        const applicantRef = doc(db, "company", userData?.company?.id || "");
+        const unsubscribe = onSnapshot(applicantRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const fetchedProfile = snapshot.data() as CompanyModel;
+                setProfile(fetchedProfile);
+            } else {
+                setProfile(null);
+            }
+        });
+
+        return () => unsubscribe(); // Cleanup the listener on unmount
+    }, []);
 
     if (authLoading) {
         return <LoadingComponent />
@@ -181,16 +211,16 @@ export default function CompanyLayout({
                     <div className="p-4 border-t border-gray-200 flex-shrink-0">
                         <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src={`${userData?.company?.companyLogoUrl}`} />
+                                <AvatarImage src={`${profile?.companyLogoUrl}`} />
                                 <AvatarFallback>
-                                    {userData?.company?.fullName
+                                    {profile?.fullName
                                         ? userData.company.fullName.charAt(0).toUpperCase()
                                         : ""}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium leading-none">{userData?.company?.fullName}</p>
-                                <p className="text-xs leading-none text-muted-foreground mt-1">{userData?.company?.officialEmail}</p>
+                                <p className="text-sm font-medium leading-none">{profile?.fullName}</p>
+                                <p className="text-xs leading-none text-muted-foreground mt-1">{profile?.officialEmail}</p>
                             </div>
                         </div>
                     </div>
@@ -225,10 +255,10 @@ export default function CompanyLayout({
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={`${userData?.company?.companyLogoUrl}`} />
+                                                <AvatarImage src={`${profile?.companyLogoUrl}`} />
                                                 <AvatarFallback>
-                                                    {userData?.company?.fullName
-                                                        ? userData.company.fullName.charAt(0).toUpperCase()
+                                                    {profile?.companyName
+                                                        ? profile.companyName.charAt(0).toUpperCase()
                                                         : ""}
                                                 </AvatarFallback>
                                             </Avatar>
@@ -237,8 +267,8 @@ export default function CompanyLayout({
                                     <DropdownMenuContent className="w-60 py-5 px-2" align="end" forceMount>
                                         <DropdownMenuLabel className="font-normal">
                                             <div className="flex flex-col space-y-1">
-                                                <p className="text-sm font-medium leading-none">{userData?.company?.fullName}</p>
-                                                <p className="text-xs leading-none text-muted-foreground mt-1">{userData?.company?.email}</p>
+                                                <p className="text-sm font-medium leading-none">{profile?.fullName}</p>
+                                                <p className="text-xs leading-none text-muted-foreground mt-1">{profile?.email}</p>
                                             </div>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />

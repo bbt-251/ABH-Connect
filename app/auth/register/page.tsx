@@ -325,9 +325,9 @@ export const countryCodes = [
     { code: "+263", country: "Zimbabwe", flag: "🇿🇼", length: 9 },
 ]
 
-const countries = countryCodes.map(c => c.country);
+export const countries = countryCodes.map(c => c.country);
 
-const companyTypes = [
+export const companyTypes = [
     "Private Limited Company",
     "Public Limited Company",
     "Partnership",
@@ -339,7 +339,7 @@ const companyTypes = [
     "Other",
 ]
 
-const companySizes = [
+export const companySizes = [
     "1-10 employees",
     "11-50 employees",
     "51-200 employees",
@@ -801,6 +801,7 @@ export default function RegisterPage() {
                 case 3:
                     if (!companyData.tinNumber.trim()) errors.push("TIN Number is required")
                     // Add file validation here if needed
+                    if (businessLicenseFile === null) errors.push("Business license file is required")
                     break
             }
         }

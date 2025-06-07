@@ -441,63 +441,6 @@ export default function ApplicantProfilePage() {
 
         setLoading(true);
 
-        // const applicantProfile: Omit<ApplicantModel, "id" | "uid"> = {
-        //     firstName: applicantData.firstName,
-        //     surname: applicantData.surname,
-        //     birthdate: dayjs(applicantData.birthdate).format(dateFormat),
-        //     birthplace: applicantData.birthplace,
-        //     gender: applicantData.gender as "Male" | "Female",
-        //     levelOfEducation: applicantData.levelOfEducation,
-        //     yearsOfExperience: applicantData.yearsOfExperience,
-        //     email: applicantData.email,
-        //     phoneCountryCode: applicantData.phoneCountryCode,
-        //     phoneNumber: applicantData.phone,
-        //     faydaNumber: applicantData.faydaNumber,
-        //     tinNumber: applicantData.tinNumber,
-
-        //     // step 2
-        //     cvDocument: null,
-        //     workExperienceSummary: applicantData.workExperience,
-        //     desiredPosition: applicantData.desiredPosition,
-        //     expectedSalary: applicantData.expectedSalary,
-        //     professionalExperiences: applicantData.professionalExperiences.map(exp => ({
-        //         ...exp,
-        //         startDate: dayjs(exp.startDate).format(dateFormat),
-        //         endDate: exp.currentlyWorking ? null : dayjs(exp.endDate).format(dateFormat),
-        //     })),
-        //     educationExperiences: applicantData.educationExperiences.map(exp => ({
-        //         ...exp,
-        //         startDate: dayjs(exp.startDate).format(dateFormat),
-        //         endDate: exp.currentlyStudying ? null : dayjs(exp.endDate).format(dateFormat),
-        //     })),
-        //     skills: applicantData.skills,
-        //     languages: applicantData.languages,
-        //     certifications: applicantData.certifications,
-        //     photo: null,
-        // };
-
-        // create applicant
-        // await register({ email: applicantProfile.email, password: applicantData.password, applicant: applicantProfile })
-        //     .then(async (a) => {
-        //         console.log("registered applicant: ", a);
-        //         if (a && a.id) {
-        //             // upload files 
-        //             if (cvFile) {
-        //                 await uploadCV(a.id, cvFile)
-        //             }
-        //             if (applicantPhotoFile) {
-        //                 await uploadApplicantPhoto(a.id, applicantPhotoFile)
-        //             }
-        //             showToast("Registration successful!", "Success", "success");
-        //             router.push("/auth")
-        //         }
-        //         else {
-        //             console.error("registration failed or registration was successful and file upload failed");
-        //             showToast("Registration failed. Please try again.", "Error", "error");
-        //         }
-
-        //     });
-
         // change the startDate and endDate to string format
         if (profile) {
 
@@ -528,11 +471,6 @@ export default function ApplicantProfilePage() {
             if (res) {
                 showToast("Profile updated successfully!", "Success", "success");
                 if (applicantPhotoFile) await uploadApplicantPhoto(updatedProfile.id, applicantPhotoFile);
-                if (cvFile) {
-                    // parse and set the states
-
-                    // upload cv file
-                }
             }
             else showToast("Failed to update profile. Please try again.", "Error", "error");
         }
