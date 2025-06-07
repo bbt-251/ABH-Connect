@@ -22,6 +22,7 @@ import {
 import Link from "next/link"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Sample applicants data
 const applicants = [
@@ -677,6 +678,313 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Applicant Evaluation Tabs */}
+                <div className="lg:col-span-3 mt-6">
+                  <Card>
+                    <CardContent className="p-6">
+                      <h2 className="text-xl font-semibold text-gray-900 mb-4">Applicant Evaluation</h2>
+                      <Tabs defaultValue="screening" className="w-full">
+                        <TabsList className="grid w-full grid-cols-5">
+                          <TabsTrigger value="screening">Screening Questions</TabsTrigger>
+                          <TabsTrigger value="matching">Matching Criteria</TabsTrigger>
+                          <TabsTrigger value="exam">Exam Management</TabsTrigger>
+                          <TabsTrigger value="metrics">Evaluation Metrics</TabsTrigger>
+                          <TabsTrigger value="interview">Interview Management</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="screening" className="mt-6">
+                          <div className="space-y-4">
+                            <h3 className="font-medium text-gray-900">Screening Questions</h3>
+                            <div className="space-y-4">
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">
+                                  1. Do you have experience with React and Node.js?
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  Answer: Yes, I have 5+ years of experience with both technologies.
+                                </p>
+                                <Badge variant="outline" className="text-green-600">
+                                  Passed
+                                </Badge>
+                              </div>
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">
+                                  2. Are you available for full-time employment?
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  Answer: Yes, I am available for full-time employment immediately.
+                                </p>
+                                <Badge variant="outline" className="text-green-600">
+                                  Passed
+                                </Badge>
+                              </div>
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">
+                                  3. What is your expected salary range?
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-2">Answer: $80,000 - $100,000 annually</p>
+                                <Badge variant="outline" className="text-yellow-600">
+                                  Review Required
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="matching" className="mt-6">
+                          <div className="space-y-4">
+                            <h3 className="font-medium text-gray-900">Matching Criteria Analysis</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">Technical Skills</h4>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">React</span>
+                                    <Badge variant="outline" className="text-green-600">
+                                      Expert
+                                    </Badge>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Node.js</span>
+                                    <Badge variant="outline" className="text-green-600">
+                                      Advanced
+                                    </Badge>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">TypeScript</span>
+                                    <Badge variant="outline" className="text-blue-600">
+                                      Intermediate
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">Experience Level</h4>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Required: 5+ years</span>
+                                    <span className="text-sm font-medium text-green-600">
+                                      Has: {selectedApplicant.experienceYears} years
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Seniority</span>
+                                    <Badge variant="outline" className="text-green-600">
+                                      {selectedApplicant.seniorityLevel}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-4 bg-green-50 rounded-lg">
+                              <h4 className="font-medium text-green-800 mb-2">
+                                Overall Match: {selectedApplicant.matchingScore}%
+                              </h4>
+                              <p className="text-sm text-green-700">
+                                This candidate meets most of the required criteria and shows strong potential for the
+                                role.
+                              </p>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="exam" className="mt-6">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="font-medium text-gray-900">Exam Management</h3>
+                              <Button size="sm">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Assign New Exam
+                              </Button>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">
+                                      Technical Assessment - React & Node.js
+                                    </h4>
+                                    <p className="text-sm text-gray-600">Assigned: 2 days ago</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-blue-600">
+                                    In Progress
+                                  </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm">
+                                    <span>Duration: 2 hours</span>
+                                    <span>Time Remaining: 1h 30m</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: "25%" }}></div>
+                                  </div>
+                                  <p className="text-xs text-gray-500">Progress: 25% completed</p>
+                                </div>
+                              </div>
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">Coding Challenge - Algorithm Design</h4>
+                                    <p className="text-sm text-gray-600">Completed: 1 week ago</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-green-600">
+                                    Completed
+                                  </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm">
+                                    <span>Score: 85/100</span>
+                                    <span>Time Taken: 1h 45m</span>
+                                  </div>
+                                  <Button variant="outline" size="sm">
+                                    View Results
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="metrics" className="mt-6">
+                          <div className="space-y-4">
+                            <h3 className="font-medium text-gray-900">Evaluation Metrics</h3>
+                            <div className="grid grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <div className="p-4 border border-gray-200 rounded-lg">
+                                  <h4 className="font-medium text-gray-900 mb-3">Performance Scores</h4>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <div className="flex justify-between mb-1">
+                                        <span className="text-sm">Technical Skills</span>
+                                        <span className="text-sm font-medium">92%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: "92%" }}></div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="flex justify-between mb-1">
+                                        <span className="text-sm">Communication</span>
+                                        <span className="text-sm font-medium">88%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: "88%" }}></div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="flex justify-between mb-1">
+                                        <span className="text-sm">Problem Solving</span>
+                                        <span className="text-sm font-medium">85%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: "85%" }}></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                <div className="p-4 border border-gray-200 rounded-lg">
+                                  <h4 className="font-medium text-gray-900 mb-3">Evaluation Summary</h4>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-sm">Overall Rating</span>
+                                      <div className="flex">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                          <span
+                                            key={star}
+                                            className={`text-lg ${star <= 4 ? "text-yellow-400" : "text-gray-300"}`}
+                                          >
+                                            ★
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-sm">Recommendation</span>
+                                      <Badge variant="outline" className="text-green-600">
+                                        Highly Recommended
+                                      </Badge>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-sm">Culture Fit</span>
+                                      <Badge variant="outline" className="text-blue-600">
+                                        Excellent
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="interview" className="mt-6">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="font-medium text-gray-900">Interview Management</h3>
+                              <Button size="sm">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Schedule Interview
+                              </Button>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">Technical Interview - Round 1</h4>
+                                    <p className="text-sm text-gray-600">Scheduled: Tomorrow, 2:00 PM</p>
+                                    <p className="text-sm text-gray-600">Interviewer: John Smith (Senior Engineer)</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-blue-600">
+                                    Scheduled
+                                  </Badge>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm">
+                                    Reschedule
+                                  </Button>
+                                  <Button variant="outline" size="sm">
+                                    Join Meeting
+                                  </Button>
+                                  <Button variant="outline" size="sm">
+                                    Send Reminder
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="p-4 border border-gray-200 rounded-lg">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">HR Interview - Initial Screening</h4>
+                                    <p className="text-sm text-gray-600">Completed: 3 days ago</p>
+                                    <p className="text-sm text-gray-600">Interviewer: Sarah Johnson (HR Manager)</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-green-600">
+                                    Completed
+                                  </Badge>
+                                </div>
+                                <div className="mt-3">
+                                  <h5 className="font-medium text-gray-900 mb-2">Interview Notes:</h5>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    Candidate showed excellent communication skills and enthusiasm for the role. Strong
+                                    cultural fit and clear career goals.
+                                  </p>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Rating: 4.5/5</span>
+                                    <Button variant="outline" size="sm">
+                                      View Full Report
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
                     </CardContent>
                   </Card>
                 </div>
