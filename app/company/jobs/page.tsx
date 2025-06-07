@@ -31,6 +31,7 @@ import {
   DollarSign,
   Briefcase,
   Clock,
+  BarChart3,
 } from "lucide-react"
 
 // Sample job postings data
@@ -89,6 +90,56 @@ const jobPostings = [
   },
 ]
 
+// Sample screening question sets (from prescreening page)
+const screeningQuestionSets = [
+  {
+    id: "sq1",
+    name: "Software Engineer Technical Screening",
+    description: "Comprehensive screening for software engineering positions",
+    questionCount: 5,
+  },
+  {
+    id: "sq2",
+    name: "Product Designer Portfolio Review",
+    description: "Design-focused screening questions",
+    questionCount: 3,
+  },
+  {
+    id: "sq3",
+    name: "Marketing Manager Experience Check",
+    description: "Marketing-specific questions",
+    questionCount: 4,
+  },
+  {
+    id: "sq4",
+    name: "General Availability & Culture Fit",
+    description: "Basic screening for availability and cultural alignment",
+    questionCount: 2,
+  },
+]
+
+// Sample criteria sets (from matching criteria)
+const criteriaSetsList = [
+  {
+    id: "cs1",
+    name: "Senior Developer Requirements",
+    description: "5 criteria for senior software engineering roles",
+    criteriaCount: 5,
+  },
+  {
+    id: "cs2",
+    name: "Entry Level Filter",
+    description: "3 criteria for entry-level positions",
+    criteriaCount: 3,
+  },
+  {
+    id: "cs3",
+    name: "Remote Work Filter",
+    description: "4 criteria for remote work positions",
+    criteriaCount: 4,
+  },
+]
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Active":
@@ -137,6 +188,10 @@ export default function JobPostingPage() {
     education: "",
     experience: "",
     description: "",
+    useScreeningQuestions: false,
+    selectedScreeningSet: "",
+    useCustomCriteria: false,
+    selectedCriteriaSet: "",
   })
 
   const filteredJobs = jobPostings.filter((job) => {
@@ -149,6 +204,14 @@ export default function JobPostingPage() {
 
   const handleCreateJob = () => {
     console.log("Creating new job:", newJob)
+    console.log(
+      "Selected screening set:",
+      newJob.useScreeningQuestions ? screeningQuestionSets.find((s) => s.id === newJob.selectedScreeningSet) : "None",
+    )
+    console.log(
+      "Selected criteria set:",
+      newJob.useCustomCriteria ? criteriaSetsList.find((s) => s.id === newJob.selectedCriteriaSet) : "None",
+    )
     setShowCreateDialog(false)
     // Reset form
     setNewJob({
@@ -162,6 +225,10 @@ export default function JobPostingPage() {
       education: "",
       experience: "",
       description: "",
+      useScreeningQuestions: false,
+      selectedScreeningSet: "",
+      useCustomCriteria: false,
+      selectedCriteriaSet: "",
     })
   }
 
@@ -569,6 +636,117 @@ export default function JobPostingPage() {
                   Use the toolbar above to format your job description. You can add headings, lists, links, images, and
                   more.
                 </p>
+              </div>
+              {/* Screening Questions Section */}
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="useScreeningQuestions"
+                    checked={newJob.useScreeningQuestions}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, useScreeningQuestions: e.target.checked, selectedScreeningSet: "" })
+                    }
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="useScreeningQuestions" className="font-medium">
+                    Include Screening Questions
+                  </Label>
+                </div>
+
+                {newJob.useScreeningQuestions && (
+                  <div className="ml-6 space-y-3">
+                    <Label htmlFor="screeningSet">Select Screening Question Set</Label>
+                    <Select
+                      value={newJob.selectedScreeningSet}
+                      onValueChange={(value) => setNewJob({ ...newJob, selectedScreeningSet: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a screening question set" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {screeningQuestionSets.map((set) => (
+                          <SelectItem key={set.id} value={set.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{set.name}</span>
+                              <span className="text-xs text-gray-500">
+                                {set.description} • {set.questionCount} questions
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {newJob.selectedScreeningSet && (
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm text-blue-800">
+                          <FileText className="w-4 h-4" />
+                          <span className="font-medium">
+                            {screeningQuestionSets.find((s) => s.id === newJob.selectedScreeningSet)?.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {screeningQuestionSets.find((s) => s.id === newJob.selectedScreeningSet)?.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Custom Criteria Section */}
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="useCustomCriteria"
+                    checked={newJob.useCustomCriteria}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, useCustomCriteria: e.target.checked, selectedCriteriaSet: "" })
+                    }
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="useCustomCriteria" className="font-medium">
+                    Apply Custom Criteria
+                  </Label>
+                </div>
+
+                {newJob.useCustomCriteria && (
+                  <div className="ml-6 space-y-3">
+                    <Label htmlFor="criteriaSet">Select Criteria Set</Label>
+                    <Select
+                      value={newJob.selectedCriteriaSet}
+                      onValueChange={(value) => setNewJob({ ...newJob, selectedCriteriaSet: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a criteria set" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {criteriaSetsList.map((set) => (
+                          <SelectItem key={set.id} value={set.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{set.name}</span>
+                              <span className="text-xs text-gray-500">{set.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {newJob.selectedCriteriaSet && (
+                      <div className="p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm text-green-800">
+                          <BarChart3 className="w-4 h-4" />
+                          <span className="font-medium">
+                            {criteriaSetsList.find((s) => s.id === newJob.selectedCriteriaSet)?.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          {criteriaSetsList.find((s) => s.id === newJob.selectedCriteriaSet)?.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
