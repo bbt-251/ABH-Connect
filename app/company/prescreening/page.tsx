@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, FileText, MessageSquare } from "lucide-react"
+import { Plus, FileText, MessageSquare, Edit, Eye, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -91,23 +91,99 @@ export default function PrescreeningPage() {
                   <div className="space-y-3">
                     <div className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">Technical Skills Assessment</h4>
-                          <p className="text-sm text-gray-600">8 questions • Last updated 2 days ago</p>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">Software Engineer Technical Screening</h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Comprehensive screening for software engineering positions including technical skills and
+                            experience
+                          </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-green-600">
+                            Active
+                          </Badge>
                           <Button variant="ghost" size="sm">
-                            Edit
+                            <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                            Delete
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">React Experience</Badge>
-                        <Badge variant="outline">Node.js Knowledge</Badge>
-                        <Badge variant="outline">Problem Solving</Badge>
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                        <div>
+                          <span className="text-gray-500">Multiple Choice Sets:</span>
+                          <span className="ml-2 font-medium">2 sets (Technical Skills, Work Environment)</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Short Answer Questions:</span>
+                          <span className="ml-2 font-medium">3 questions (Problem Solving, Leadership, Technical)</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Est. Time:</span>
+                          <span className="ml-2 font-medium">15 minutes</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Used in Jobs:</span>
+                          <span className="ml-2 font-medium">12 active positions</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <Badge variant="secondary">Technical Skills Assessment</Badge>
+                        <Badge variant="secondary">Work Environment Preferences</Badge>
+                        <Badge variant="secondary">Problem Solving Approach</Badge>
+                        <Badge variant="secondary">+2 more</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">Customer Service Skills Assessment</h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Evaluate candidates on their communication, empathy, and problem-solving abilities in
+                            customer service roles.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">Draft</Badge>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                        <div>
+                          <span className="text-gray-500">Multiple Choice Sets:</span>
+                          <span className="ml-2 font-medium">1 set (Customer Interaction Scenarios)</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Short Answer Questions:</span>
+                          <span className="ml-2 font-medium">2 questions (Conflict Resolution, Empathy)</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Est. Time:</span>
+                          <span className="ml-2 font-medium">10 minutes</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Used in Jobs:</span>
+                          <span className="ml-2 font-medium">No active positions</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <Badge variant="secondary">Customer Interaction Scenarios</Badge>
+                        <Badge variant="secondary">Conflict Resolution Skills</Badge>
+                        <Badge variant="secondary">Empathy Assessment</Badge>
                       </div>
                     </div>
                   </div>
