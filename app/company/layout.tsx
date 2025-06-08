@@ -30,6 +30,8 @@ import {
   X,
   Crown,
   Building,
+  FileCheck,
+  FileCheckIcon as FileCheckCheck,
 } from "lucide-react"
 
 const navigationItems = [
@@ -67,6 +69,18 @@ const navigationItems = [
     name: "Interview Management",
     href: "/company/interviews",
     icon: Users,
+    premium: false,
+  },
+  {
+    name: "Evaluation Form",
+    href: "/company/evaluation-form",
+    icon: FileCheck,
+    premium: false,
+  },
+  {
+    name: "Filled Evaluation Form",
+    href: "/company/filled-evaluation-form",
+    icon: FileCheckCheck,
     premium: false,
   },
   {
