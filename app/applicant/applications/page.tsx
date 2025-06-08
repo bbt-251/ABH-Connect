@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Calendar, MapPin, Building, Eye, MessageSquare, FileText } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Search, Calendar, MapPin, Building, Eye, MessageSquare, FileText, Star, Award } from "lucide-react"
 import Link from "next/link"
 
 const applications = [
@@ -14,7 +15,7 @@ const applications = [
     id: 1,
     company: "Google",
     position: "Senior Software Engineer",
-    status: "Interview Scheduled",
+    status: "Interview",
     appliedDate: "2024-01-15",
     salary: "$150k - $200k",
     location: "Mountain View, CA",
@@ -22,12 +23,41 @@ const applications = [
     logo: "/placeholder.svg?height=40&width=40",
     interviewDate: "2024-01-20",
     notes: "Technical interview scheduled with the engineering team",
+    evaluationForms: [
+      {
+        id: 1,
+        name: "Technical Skills Assessment",
+        passingScore: 75,
+        totalScore: 85,
+        status: "Completed",
+        completedDate: "2024-01-09",
+        metrics: [
+          { name: "Problem Solving", score: 4, threshold: 3, weight: 30, maxScore: 5 },
+          { name: "Code Quality", score: 4, threshold: 3, weight: 25, maxScore: 5 },
+          { name: "System Design", score: 5, threshold: 4, weight: 25, maxScore: 5 },
+          { name: "Communication", score: 3, threshold: 3, weight: 20, maxScore: 5 },
+        ],
+      },
+      {
+        id: 2,
+        name: "Cultural Fit Assessment",
+        passingScore: 70,
+        totalScore: 78,
+        status: "Completed",
+        completedDate: "2024-01-09",
+        metrics: [
+          { name: "Team Collaboration", score: 4, threshold: 3, weight: 40, maxScore: 5 },
+          { name: "Leadership Potential", score: 4, threshold: 3, weight: 30, maxScore: 5 },
+          { name: "Adaptability", score: 3, threshold: 3, weight: 30, maxScore: 5 },
+        ],
+      },
+    ],
   },
   {
     id: 2,
     company: "Microsoft",
     position: "Product Manager",
-    status: "Under Review",
+    status: "Applied",
     appliedDate: "2024-01-12",
     salary: "$120k - $160k",
     location: "Seattle, WA",
@@ -39,13 +69,14 @@ const applications = [
     id: 3,
     company: "Apple",
     position: "UX Designer",
-    status: "Applied",
+    status: "Offer",
     appliedDate: "2024-01-10",
     salary: "$110k - $140k",
     location: "Cupertino, CA",
     type: "Full-time",
     logo: "/placeholder.svg?height=40&width=40",
-    notes: "Portfolio submitted with application",
+    notes: "Offer received - considering terms",
+    offerDate: "2024-01-18",
   },
   {
     id: 4,
@@ -63,31 +94,58 @@ const applications = [
     id: 5,
     company: "Amazon",
     position: "Software Development Engineer",
-    status: "Interview Completed",
+    status: "Interview",
     appliedDate: "2024-01-08",
     salary: "$140k - $180k",
     location: "Seattle, WA",
     type: "Full-time",
     logo: "/placeholder.svg?height=40&width=40",
-    notes: "Waiting for final decision",
+    notes: "Interview in progress",
+    evaluationForms: [
+      {
+        id: 1,
+        name: "Technical Assessment",
+        passingScore: 80,
+        totalScore: 88,
+        status: "Completed",
+        completedDate: "2024-01-10",
+        metrics: [
+          { name: "Algorithms", score: 5, threshold: 4, weight: 40, maxScore: 5 },
+          { name: "System Architecture", score: 4, threshold: 3, weight: 35, maxScore: 5 },
+          { name: "Problem Solving", score: 4, threshold: 3, weight: 25, maxScore: 5 },
+        ],
+      },
+    ],
   },
 ]
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Interview Scheduled":
-      return "bg-blue-100 text-blue-800"
-    case "Under Review":
-      return "bg-yellow-100 text-yellow-800"
     case "Applied":
       return "bg-gray-100 text-gray-800"
+    case "Interview":
+      return "bg-blue-100 text-blue-800"
     case "Rejected":
       return "bg-red-100 text-red-800"
-    case "Interview Completed":
+    case "Offer":
       return "bg-green-100 text-green-800"
     default:
       return "bg-gray-100 text-gray-800"
   }
+}
+
+const getScoreColor = (score: number, threshold: number) => {
+  if (score >= threshold) {
+    return "text-green-600"
+  } else {
+    return "text-red-600"
+  }
+}
+
+const renderStars = (score: number, maxScore: number) => {
+  return Array.from({ length: maxScore }, (_, i) => (
+    <Star key={i} className={`w-4 h-4 ${i < score ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+  ))
 }
 
 export default function ApplicationsPage() {
@@ -106,9 +164,9 @@ export default function ApplicationsPage() {
   const statusCounts = {
     all: applications.length,
     applied: applications.filter((app) => app.status === "Applied").length,
-    review: applications.filter((app) => app.status === "Under Review").length,
-    interview: applications.filter((app) => app.status.includes("Interview")).length,
+    interview: applications.filter((app) => app.status === "Interview").length,
     rejected: applications.filter((app) => app.status === "Rejected").length,
+    offer: applications.filter((app) => app.status === "Offer").length,
   }
 
   return (
@@ -138,25 +196,22 @@ export default function ApplicationsPage() {
             <div className="text-sm text-gray-500">Applied</div>
           </CardContent>
         </Card>
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setStatusFilter("Under Review")}
-        >
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{statusCounts.review}</div>
-            <div className="text-sm text-gray-500">Under Review</div>
-          </CardContent>
-        </Card>
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStatusFilter("Interview")}>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{statusCounts.interview}</div>
-            <div className="text-sm text-gray-500">Interviews</div>
+            <div className="text-sm text-gray-500">Interview</div>
           </CardContent>
         </Card>
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStatusFilter("Rejected")}>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-red-600">{statusCounts.rejected}</div>
             <div className="text-sm text-gray-500">Rejected</div>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setStatusFilter("Offer")}>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{statusCounts.offer}</div>
+            <div className="text-sm text-gray-500">Offer</div>
           </CardContent>
         </Card>
       </div>
@@ -181,10 +236,9 @@ export default function ApplicationsPage() {
               <SelectContent>
                 <SelectItem value="all">All Applications</SelectItem>
                 <SelectItem value="Applied">Applied</SelectItem>
-                <SelectItem value="Under Review">Under Review</SelectItem>
-                <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
-                <SelectItem value="Interview Completed">Interview Completed</SelectItem>
+                <SelectItem value="Interview">Interview</SelectItem>
                 <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="Offer">Offer</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -227,6 +281,12 @@ export default function ApplicationsPage() {
                         <Calendar className="w-4 h-4" />
                         <span>Applied on {application.appliedDate}</span>
                       </div>
+                      {application.offerDate && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>Offer received on {application.offerDate}</span>
+                        </div>
+                      )}
                       <div className="font-medium text-gray-900">{application.salary}</div>
                     </div>
                   </div>
@@ -281,6 +341,12 @@ export default function ApplicationsPage() {
                           <span>{selectedApplication.interviewDate}</span>
                         </div>
                       )}
+                      {selectedApplication.offerDate && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Offer Date:</span>
+                          <span>{selectedApplication.offerDate}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -298,6 +364,79 @@ export default function ApplicationsPage() {
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Message
                     </Button>
+                    {selectedApplication.status === "Interview" && selectedApplication.evaluationForms && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Award className="w-4 h-4 mr-2" />
+                            View Evaluation
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Interview Evaluation Results</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-6">
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                              <h3 className="text-lg font-semibold">{selectedApplication.position}</h3>
+                              <p className="text-gray-600">{selectedApplication.company}</p>
+                              <p className="text-sm text-gray-500 mt-1">Interview in progress</p>
+                            </div>
+
+                            {selectedApplication.evaluationForms.map((form) => (
+                              <Card key={form.id}>
+                                <CardHeader>
+                                  <div className="flex items-center justify-between">
+                                    <CardTitle className="text-lg">{form.name}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant={form.totalScore >= form.passingScore ? "default" : "destructive"}>
+                                        {form.totalScore >= form.passingScore ? "Passed" : "Not Passed"}
+                                      </Badge>
+                                      <span className="text-sm text-gray-500">
+                                        Score: {form.totalScore}% (Required: {form.passingScore}%)
+                                      </span>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="space-y-4">
+                                    <div className="text-sm text-gray-600">Completed on {form.completedDate}</div>
+
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium">Evaluation Metrics</h4>
+                                      {form.metrics.map((metric, index) => (
+                                        <div key={index} className="border rounded-lg p-4">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="font-medium">{metric.name}</span>
+                                            <div className="flex items-center gap-2">
+                                              <div className="flex items-center">
+                                                {renderStars(metric.score, metric.maxScore)}
+                                              </div>
+                                              <span
+                                                className={`text-sm font-medium ${getScoreColor(metric.score, metric.threshold)}`}
+                                              >
+                                                {metric.score}/{metric.maxScore}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <div className="flex justify-between text-sm text-gray-600">
+                                            <span>Weight: {metric.weight}%</span>
+                                            <span>
+                                              Threshold: {metric.threshold}/{metric.maxScore}
+                                              {metric.score >= metric.threshold ? " ✓" : " ✗"}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
                 </div>
               </CardContent>

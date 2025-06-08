@@ -30,7 +30,22 @@ import {
   Menu,
   X,
   Crown,
+  ClipboardList,
+  Timer,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 const navigationItems = [
   {
@@ -77,6 +92,103 @@ const navigationItems = [
   },
 ]
 
+// Sample exam questions - expanded for multiple pages
+const examQuestions = [
+  {
+    id: 1,
+    type: "multiple-choice",
+    question: "Which of the following is a key principle of effective communication in a professional environment?",
+    options: [
+      "Using complex terminology to demonstrate expertise",
+      "Clarity and conciseness in messaging",
+      "Avoiding written communication whenever possible",
+      "Communicating only when absolutely necessary",
+    ],
+    correctAnswer: 1,
+  },
+  {
+    id: 2,
+    type: "short-answer",
+    question:
+      "Describe a situation where you had to resolve a conflict in a team setting. What approach did you take and what was the outcome?",
+    maxLength: 500,
+  },
+  {
+    id: 3,
+    type: "multiple-choice",
+    question: "What is the most effective way to prioritize tasks when facing multiple deadlines?",
+    options: [
+      "Complete tasks in the order they were assigned",
+      "Work on the easiest tasks first to build momentum",
+      "Assess urgency and importance to determine priority",
+      "Delegate all tasks to team members",
+    ],
+    correctAnswer: 2,
+  },
+  {
+    id: 4,
+    type: "short-answer",
+    question: "Explain how you stay updated with industry trends and developments relevant to your field.",
+    maxLength: 300,
+  },
+  {
+    id: 5,
+    type: "multiple-choice",
+    question: "Which approach is most effective when receiving constructive criticism?",
+    options: [
+      "Defending your actions and explaining your reasoning",
+      "Listening actively and asking clarifying questions",
+      "Immediately implementing all suggested changes",
+      "Seeking a second opinion before responding",
+    ],
+    correctAnswer: 1,
+  },
+  {
+    id: 6,
+    type: "short-answer",
+    question: "Describe your experience with project management. What tools and methodologies have you used?",
+    maxLength: 400,
+  },
+  {
+    id: 7,
+    type: "multiple-choice",
+    question: "What is the best approach when working with a diverse team?",
+    options: [
+      "Treat everyone exactly the same way",
+      "Adapt communication styles to individual preferences",
+      "Focus only on work-related interactions",
+      "Avoid discussing cultural differences",
+    ],
+    correctAnswer: 1,
+  },
+  {
+    id: 8,
+    type: "short-answer",
+    question: "How do you handle stress and pressure in high-stakes situations? Provide a specific example.",
+    maxLength: 350,
+  },
+  {
+    id: 9,
+    type: "multiple-choice",
+    question: "Which quality is most important for effective leadership?",
+    options: [
+      "Making all decisions independently",
+      "Being the most technically skilled person",
+      "Inspiring and motivating others",
+      "Maintaining strict control over all processes",
+    ],
+    correctAnswer: 2,
+  },
+  {
+    id: 10,
+    type: "short-answer",
+    question: "What are your long-term career goals and how does this position align with them?",
+    maxLength: 400,
+  },
+]
+
+const QUESTIONS_PER_PAGE = 2
+
 export default function ApplicantLayout({
   children,
 }: {
@@ -85,6 +197,80 @@ export default function ApplicantLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showPremiumModal, setShowPremiumModal] = useState(false)
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false)
+  const [showExamModal, setShowExamModal] = useState(false)
+  const [examTimeRemaining, setExamTimeRemaining] = useState(30 * 60) // 30 minutes in seconds
+  const [examAnswers, setExamAnswers] = useState({})
+  const [currentPage, setCurrentPage] = useState(0)
+
+  const totalPages = Math.ceil(examQuestions.length / QUESTIONS_PER_PAGE)
+  const currentQuestions = examQuestions.slice(currentPage * QUESTIONS_PER_PAGE, (currentPage + 1) * QUESTIONS_PER_PAGE)
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+
+  // Handle exam timer
+  const startExam = () => {
+    setShowInstructionsModal(false)
+    setShowExamModal(true)
+    setCurrentPage(0)
+
+    // Start the timer
+    const timer = setInterval(() => {
+      setExamTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Auto-submit when time expires
+          submitExam()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    // Clean up timer on unmount
+    return () => clearInterval(timer)
+  }
+
+  // Handle exam submission
+  const submitExam = () => {
+    // Here you would normally send the answers to the server
+    console.log("Exam submitted:", examAnswers)
+    setShowExamModal(false)
+    // Reset for next time
+    setExamTimeRemaining(30 * 60)
+    setExamAnswers({})
+    setCurrentPage(0)
+  }
+
+  // Handle answer changes
+  const handleAnswerChange = (questionId, answer) => {
+    setExamAnswers((prev) => ({
+      ...prev,
+      [questionId]: answer,
+    }))
+  }
+
+  // Navigation functions
+  const goToNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const goToPreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const goToPage = (pageIndex) => {
+    setCurrentPage(pageIndex)
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -161,6 +347,17 @@ export default function ApplicantLayout({
                 </div>
               )
             })}
+
+            {/* Application Tab */}
+            <div className="relative">
+              <button
+                onClick={() => setShowInstructionsModal(true)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <ClipboardList className="w-5 h-5" />
+                <span className="flex-1 text-left">Application</span>
+              </button>
+            </div>
           </nav>
 
           {/* User Profile Section */}
@@ -282,6 +479,179 @@ export default function ApplicantLayout({
           </div>
         </div>
       )}
+
+      {/* Instructions Modal */}
+      <Dialog open={showInstructionsModal} onOpenChange={setShowInstructionsModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Important Application Instructions</DialogTitle>
+            <DialogDescription>Please read carefully before proceeding.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-4 text-sm">
+            <p>
+              You are about to access the application form. Please note the following key information crucial to your
+              application.
+            </p>
+
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                Once you initiate the application, you must finish the entire process in one go. Returning to your
+                application at a later time is not permitted.
+              </li>
+              <li>
+                Each applicant is limited to submitting one application form. Therefore, any attempt to reapply will
+                result in the rejection of the subsequent application.
+              </li>
+              <li>
+                Ensure that you possess all necessary resources to avoid disruptions during your application process,
+                including access to uninterrupted power and internet connectivity.
+              </li>
+              <li>
+                The application process may include an screening questions/exam designed to evaluate your suitability
+                for the position. This screening questions/exam is timed, meaning once the allocated time has elapsed,
+                your application will be automatically submitted, regardless of whether you have completed the screening
+                questions/exam or not.
+              </li>
+              <li>
+                As part of the screening questions/exam procedure, for proctoring and security purposes, random
+                snapshots are captured to detect unauthorized activities. To do, so make sure that your built-in camera
+                or external camera is functioning and you are well visible. Do not continue, if your built-in camera or
+                external camera is not operational, to not get disqualified. Please grant your browser access to the
+                camera, when you start the screening questions/exam.
+              </li>
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => startExam()} className="w-full bg-[#0a3141] hover:bg-[#1a4a5c] text-white">
+              I understand, let me proceed to the exam page
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exam Modal - Much Wider */}
+      <Dialog
+        open={showExamModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Confirm before closing
+            if (confirm("Are you sure you want to exit? Your progress will be lost.")) {
+              setShowExamModal(false)
+            }
+          }
+        }}
+      >
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>Application Screening Questions</span>
+              <div className="bg-[#0a3141] text-white px-4 py-2 rounded-md flex items-center gap-2">
+                <Timer className="w-4 h-4" />
+                <span className="font-mono">{formatTime(examTimeRemaining)}</span>
+              </div>
+            </DialogTitle>
+            <DialogDescription>Please answer all questions to the best of your ability.</DialogDescription>
+          </DialogHeader>
+
+          {/* Page Indicator */}
+          <div className="flex items-center justify-center gap-2 py-4 border-b flex-shrink-0">
+            <span className="text-sm text-gray-600">
+              Page {currentPage + 1} of {totalPages}
+            </span>
+            <div className="flex gap-1 ml-4">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goToPage(i)}
+                  className={`w-3 h-3 rounded-full transition-colors ${
+                    i === currentPage ? "bg-[#0a3141]" : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Questions Content */}
+          <div className="flex-1 overflow-y-auto py-6">
+            <div className="space-y-8 px-2">
+              {currentQuestions.map((question) => (
+                <div key={question.id} className="p-6 border rounded-lg bg-gray-50">
+                  <h3 className="font-medium mb-4 text-lg">{question.question}</h3>
+
+                  {question.type === "multiple-choice" ? (
+                    <RadioGroup
+                      onValueChange={(value) => handleAnswerChange(question.id, Number.parseInt(value))}
+                      value={examAnswers[question.id]?.toString()}
+                    >
+                      <div className="space-y-3">
+                        {question.options.map((option, index) => (
+                          <div key={index} className="flex items-start space-x-3 p-3 bg-white rounded-md border">
+                            <RadioGroupItem
+                              value={index.toString()}
+                              id={`q${question.id}-option${index}`}
+                              className="mt-1"
+                            />
+                            <Label htmlFor={`q${question.id}-option${index}`} className="flex-1 cursor-pointer">
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  ) : (
+                    <div className="bg-white rounded-md border p-4">
+                      <Textarea
+                        placeholder="Type your answer here..."
+                        className="min-h-[200px] border-0 resize-none focus:ring-0 text-base"
+                        maxLength={question.maxLength}
+                        onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                        value={examAnswers[question.id] || ""}
+                      />
+                      <div className="text-xs text-gray-500 mt-2 text-right border-t pt-2">
+                        {examAnswers[question.id]?.length || 0}/{question.maxLength} characters
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation Footer */}
+          <DialogFooter className="flex-shrink-0 border-t pt-4">
+            <div className="flex items-center justify-between w-full">
+              <Button
+                variant="outline"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 0}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-4">
+                {currentPage === totalPages - 1 ? (
+                  <Button onClick={submitExam} className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white px-8">
+                    Submit Application
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages - 1}
+                    className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white flex items-center gap-2"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

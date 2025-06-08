@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { FileText, Eye, MessageSquare, TrendingUp, Calendar, Users, Target } from "lucide-react"
+import { FileText, Eye, MessageSquare, TrendingUp, Calendar, Users } from "lucide-react"
 
 // Sample data
 const applicationData = [
@@ -84,7 +84,7 @@ export default function ApplicantDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
@@ -117,17 +117,6 @@ export default function ApplicantDashboard() {
             <p className="text-xs text-muted-foreground">3 scheduled this week</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23%</div>
-            <p className="text-xs text-muted-foreground">Above average</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Charts Section */}
@@ -154,6 +143,13 @@ export default function ApplicantDashboard() {
                 <div className="text-right">
                   <p className="text-sm font-medium">$150k - $200k</p>
                   <p className="text-xs text-gray-500">Full-time</p>
+                  <Button
+                    size="sm"
+                    className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+                    onClick={() => console.log("Applied to job")}
+                  >
+                    Apply Now
+                  </Button>
                 </div>
               </div>
 
@@ -169,6 +165,13 @@ export default function ApplicantDashboard() {
                 <div className="text-right">
                   <p className="text-sm font-medium">$130k - $170k</p>
                   <p className="text-xs text-gray-500">Full-time</p>
+                  <Button
+                    size="sm"
+                    className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+                    onClick={() => console.log("Applied to job")}
+                  >
+                    Apply Now
+                  </Button>
                 </div>
               </div>
 
@@ -184,6 +187,13 @@ export default function ApplicantDashboard() {
                 <div className="text-right">
                   <p className="text-sm font-medium">$140k - $180k</p>
                   <p className="text-xs text-gray-500">Full-time</p>
+                  <Button
+                    size="sm"
+                    className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+                    onClick={() => console.log("Applied to job")}
+                  >
+                    Apply Now
+                  </Button>
                 </div>
               </div>
 
@@ -199,6 +209,13 @@ export default function ApplicantDashboard() {
                 <div className="text-right">
                   <p className="text-sm font-medium">$135k - $175k</p>
                   <p className="text-xs text-gray-500">Full-time</p>
+                  <Button
+                    size="sm"
+                    className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+                    onClick={() => console.log("Applied to job")}
+                  >
+                    Apply Now
+                  </Button>
                 </div>
               </div>
             </div>
