@@ -6,7 +6,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   LayoutDashboard,
   FileText,
@@ -32,6 +35,10 @@ import {
   Building,
   FileCheck,
   FileCheckIcon as FileCheckCheck,
+  UserPlus,
+  Mail,
+  Plus,
+  Trash2,
 } from "lucide-react"
 
 const navigationItems = [
@@ -84,6 +91,13 @@ const navigationItems = [
     premium: false,
   },
   {
+    name: "Invite Evaluators",
+    href: "#",
+    icon: UserPlus,
+    premium: false,
+    isModal: true,
+  },
+  {
     name: "Candidate Pool",
     href: "/company/candidates",
     icon: Users,
@@ -109,6 +123,15 @@ const navigationItems = [
   },
 ]
 
+interface Evaluator {
+  id: string
+  email: string
+  name: string
+  status: "pending" | "accepted" | "declined"
+  invitedDate: string
+  role: string
+}
+
 export default function CompanyLayout({
   children,
 }: {
@@ -118,6 +141,77 @@ export default function CompanyLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showPremiumModal, setShowPremiumModal] = useState(false)
   const [isNavCollapsed, setIsNavCollapsed] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [newEvaluatorEmail, setNewEvaluatorEmail] = useState("")
+  const [invitedEvaluators, setInvitedEvaluators] = useState<Evaluator[]>([
+    {
+      id: "1",
+      email: "john.smith@techcorp.com",
+      name: "John Smith",
+      status: "accepted",
+      invitedDate: "2024-01-15",
+      role: "Senior Technical Lead",
+    },
+    {
+      id: "2",
+      email: "sarah.wilson@techcorp.com",
+      name: "Sarah Wilson",
+      status: "pending",
+      invitedDate: "2024-01-18",
+      role: "HR Manager",
+    },
+    {
+      id: "3",
+      email: "mike.johnson@techcorp.com",
+      name: "Mike Johnson",
+      status: "accepted",
+      invitedDate: "2024-01-10",
+      role: "Product Manager",
+    },
+    {
+      id: "4",
+      email: "lisa.brown@techcorp.com",
+      name: "Lisa Brown",
+      status: "declined",
+      invitedDate: "2024-01-12",
+      role: "Team Lead",
+    },
+  ])
+
+  const handleInviteEvaluator = () => {
+    if (newEvaluatorEmail && newEvaluatorEmail.includes("@")) {
+      const newEvaluator: Evaluator = {
+        id: Date.now().toString(),
+        email: newEvaluatorEmail,
+        name: newEvaluatorEmail
+          .split("@")[0]
+          .replace(".", " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
+        status: "pending",
+        invitedDate: new Date().toISOString().split("T")[0],
+        role: "Evaluator",
+      }
+      setInvitedEvaluators([...invitedEvaluators, newEvaluator])
+      setNewEvaluatorEmail("")
+    }
+  }
+
+  const handleRemoveEvaluator = (id: string) => {
+    setInvitedEvaluators(invitedEvaluators.filter((evaluator) => evaluator.id !== id))
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "accepted":
+        return "bg-green-100 text-green-800"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "declined":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -188,6 +282,12 @@ export default function CompanyLayout({
                   setShowPremiumModal(true)
                   return
                 }
+                if (item.isModal) {
+                  e.preventDefault()
+                  setShowInviteModal(true)
+                  setSidebarOpen(false)
+                  return
+                }
                 setSidebarOpen(false)
               }
 
@@ -212,6 +312,19 @@ export default function CompanyLayout({
                       <Crown
                         className={`w-4 h-4 text-amber-500 transition-all duration-200 ${isNavCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}`}
                       />
+                    </button>
+                  ) : item.isModal ? (
+                    <button
+                      onClick={handleClick}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900`}
+                      title={isNavCollapsed ? item.name : ""}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span
+                        className={`transition-all duration-200 ${isNavCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}`}
+                      >
+                        {item.name}
+                      </span>
                     </button>
                   ) : (
                     <Link
@@ -321,6 +434,130 @@ export default function CompanyLayout({
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+
+      {/* Invite Evaluators Modal */}
+      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Invite Evaluators
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Invite New Evaluator Section */}
+            <div className="border rounded-lg p-4">
+              <h3 className="text-lg font-medium mb-4">Invite New Evaluator</h3>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="Enter evaluator email address"
+                    value={newEvaluatorEmail}
+                    onChange={(e) => setNewEvaluatorEmail(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleInviteEvaluator()}
+                  />
+                </div>
+                <Button
+                  onClick={handleInviteEvaluator}
+                  disabled={!newEvaluatorEmail || !newEvaluatorEmail.includes("@")}
+                  className="bg-[#0a3141] hover:bg-[#0a3141]/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Send Invite
+                </Button>
+              </div>
+            </div>
+
+            {/* Invited Evaluators List */}
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Invited Evaluators</h3>
+                <Badge variant="secondary" className="text-sm">
+                  {invitedEvaluators.length} Total
+                </Badge>
+              </div>
+
+              {invitedEvaluators.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Mail className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No evaluators invited yet</p>
+                  <p className="text-sm">Start by adding an email address above</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {invitedEvaluators.map((evaluator) => (
+                    <div
+                      key={evaluator.id}
+                      className="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={`/placeholder.svg?height=40&width=40`} />
+                          <AvatarFallback>
+                            {evaluator.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-gray-900">{evaluator.name}</p>
+                          <p className="text-sm text-gray-600">{evaluator.email}</p>
+                          <p className="text-xs text-gray-500">{evaluator.role}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <Badge className={getStatusColor(evaluator.status)}>
+                            {evaluator.status.charAt(0).toUpperCase() + evaluator.status.slice(1)}
+                          </Badge>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Invited: {new Date(evaluator.invitedDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveEvaluator(evaluator.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {invitedEvaluators.filter((e) => e.status === "accepted").length}
+                </div>
+                <div className="text-sm text-green-700">Accepted</div>
+              </div>
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {invitedEvaluators.filter((e) => e.status === "pending").length}
+                </div>
+                <div className="text-sm text-yellow-700">Pending</div>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">
+                  {invitedEvaluators.filter((e) => e.status === "declined").length}
+                </div>
+                <div className="text-sm text-red-700">Declined</div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Premium Modal */}
       {showPremiumModal && (
