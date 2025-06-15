@@ -91,6 +91,12 @@ const navigationItems = [
     premium: false,
   },
   {
+    name: "Custom Criteria Form",
+    href: "/company/custom-criteria",
+    icon: FileText,
+    premium: false,
+  },
+  {
     name: "Invite Evaluators",
     href: "#",
     icon: UserPlus,
@@ -127,7 +133,7 @@ interface Evaluator {
   id: string
   email: string
   name: string
-  status: "pending" | "accepted" | "declined"
+  status: "draft" | "evaluated"
   invitedDate: string
   role: string
 }
@@ -148,7 +154,7 @@ export default function CompanyLayout({
       id: "1",
       email: "john.smith@techcorp.com",
       name: "John Smith",
-      status: "accepted",
+      status: "evaluated",
       invitedDate: "2024-01-15",
       role: "Senior Technical Lead",
     },
@@ -156,7 +162,7 @@ export default function CompanyLayout({
       id: "2",
       email: "sarah.wilson@techcorp.com",
       name: "Sarah Wilson",
-      status: "pending",
+      status: "draft",
       invitedDate: "2024-01-18",
       role: "HR Manager",
     },
@@ -164,7 +170,7 @@ export default function CompanyLayout({
       id: "3",
       email: "mike.johnson@techcorp.com",
       name: "Mike Johnson",
-      status: "accepted",
+      status: "evaluated",
       invitedDate: "2024-01-10",
       role: "Product Manager",
     },
@@ -172,7 +178,7 @@ export default function CompanyLayout({
       id: "4",
       email: "lisa.brown@techcorp.com",
       name: "Lisa Brown",
-      status: "declined",
+      status: "draft",
       invitedDate: "2024-01-12",
       role: "Team Lead",
     },
@@ -187,7 +193,7 @@ export default function CompanyLayout({
           .split("@")[0]
           .replace(".", " ")
           .replace(/\b\w/g, (l) => l.toUpperCase()),
-        status: "pending",
+        status: "draft",
         invitedDate: new Date().toISOString().split("T")[0],
         role: "Evaluator",
       }
@@ -202,12 +208,10 @@ export default function CompanyLayout({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "accepted":
+      case "evaluated":
         return "bg-green-100 text-green-800"
-      case "pending":
+      case "draft":
         return "bg-yellow-100 text-yellow-800"
-      case "declined":
-        return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -535,24 +539,18 @@ export default function CompanyLayout({
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {invitedEvaluators.filter((e) => e.status === "accepted").length}
+                  {invitedEvaluators.filter((e) => e.status === "evaluated").length}
                 </div>
-                <div className="text-sm text-green-700">Accepted</div>
+                <div className="text-sm text-green-700">Evaluated</div>
               </div>
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {invitedEvaluators.filter((e) => e.status === "pending").length}
+                  {invitedEvaluators.filter((e) => e.status === "draft").length}
                 </div>
-                <div className="text-sm text-yellow-700">Pending</div>
-              </div>
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">
-                  {invitedEvaluators.filter((e) => e.status === "declined").length}
-                </div>
-                <div className="text-sm text-red-700">Declined</div>
+                <div className="text-sm text-yellow-700">Draft</div>
               </div>
             </div>
           </div>
