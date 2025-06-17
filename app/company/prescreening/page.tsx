@@ -30,9 +30,49 @@ export default function PrescreeningPage() {
   const [showCustomCriteriaModal, setShowCustomCriteriaModal] = useState(false)
   const [criteriaSetName, setCriteriaSetName] = useState("")
   const [selectedCriteria, setSelectedCriteria] = useState<any[]>([])
-  const [customCriteriaName, setCustomCriteriaName] = useState("")
-  const [customCriteriaType, setCustomCriteriaType] = useState("")
-  const [customCriteriaOptions, setCustomCriteriaOptions] = useState("")
+
+  const [customCriteria, setCustomCriteria] = useState([
+    {
+      id: "cc1",
+      name: "Remote Work Preference",
+      type: "multiple-choice",
+      options: "Fully Remote, Hybrid, On-site, Flexible",
+      isEditing: false,
+    },
+    {
+      id: "cc2",
+      name: "Years of Leadership Experience",
+      type: "number",
+      options: "",
+      isEditing: false,
+    },
+  ])
+
+  const updateCustomCriteria = (id: string, field: string, value: string) => {
+    setCustomCriteria((prev) =>
+      prev.map((criteria) => (criteria.id === id ? { ...criteria, [field]: value } : criteria)),
+    )
+  }
+
+  const saveCustomCriteria = (id: string) => {
+    setCustomCriteria((prev) =>
+      prev.map((criteria) => (criteria.id === id ? { ...criteria, isEditing: false } : criteria)),
+    )
+  }
+
+  const cancelEditCustomCriteria = (id: string) => {
+    setCustomCriteria((prev) => prev.filter((criteria) => criteria.id !== id || !criteria.isEditing))
+  }
+
+  const editCustomCriteria = (id: string) => {
+    setCustomCriteria((prev) =>
+      prev.map((criteria) => (criteria.id === id ? { ...criteria, isEditing: true } : criteria)),
+    )
+  }
+
+  const deleteCustomCriteria = (id: string) => {
+    setCustomCriteria((prev) => prev.filter((criteria) => criteria.id !== id))
+  }
 
   return (
     <div className="container mx-auto py-10">
@@ -530,65 +570,154 @@ export default function PrescreeningPage() {
       {/* Custom Criteria Modal */}
       {showCustomCriteriaModal && (
         <Dialog open={showCustomCriteriaModal} onOpenChange={setShowCustomCriteriaModal}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Define Custom Criteria</DialogTitle>
-              <DialogDescription>Create custom criteria that can be used in your criteria sets</DialogDescription>
+              <DialogDescription>
+                Create multiple custom criteria that can be used in your criteria sets
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Name</label>
-                <Input
-                  placeholder="e.g., Remote Work Preference"
-                  value={customCriteriaName}
-                  onChange={(e) => setCustomCriteriaName(e.target.value)}
-                />
+            <div className="space-y-6">
+              {/* Add New Criteria Button */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Custom Criteria List</h3>
+                <Button
+                  onClick={() => {
+                    setCustomCriteria((prev) => [
+                      ...prev,
+                      {
+                        id: Math.random().toString(36).substr(2, 9),
+                        name: "",
+                        type: "",
+                        options: "",
+                        isEditing: true,
+                      },
+                    ])
+                  }}
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Criteria
+                </Button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Type</label>
-                <Select value={customCriteriaType} onValueChange={setCustomCriteriaType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="select">Multiple Choice</SelectItem>
-                    <SelectItem value="number">Number</SelectItem>
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="boolean">Yes/No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Criteria List */}
+              <div className="space-y-4">
+                {customCriteria.map((criteria, index) => (
+                  <div key={criteria.id} className="p-4 border border-gray-200 rounded-lg">
+                    {criteria.isEditing ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Name</label>
+                            <Input
+                              placeholder="e.g., Remote Work Preference"
+                              value={criteria.name}
+                              onChange={(e) => updateCustomCriteria(criteria.id, "name", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Criteria Type</label>
+                            <Select
+                              value={criteria.type}
+                              onValueChange={(value) => updateCustomCriteria(criteria.id, "type", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="text">Text</SelectItem>
+                                <SelectItem value="multiline-text">Multi-line Text</SelectItem>
+                                <SelectItem value="number">Number</SelectItem>
+                                <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Options (for Multiple Choice)</label>
-                <Input
-                  placeholder="Enter options separated by commas"
-                  value={customCriteriaOptions}
-                  onChange={(e) => setCustomCriteriaOptions(e.target.value)}
-                />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Options (for Multiple Choice)
+                          </label>
+                          <Input
+                            placeholder="Enter options separated by commas"
+                            value={criteria.options}
+                            onChange={(e) => updateCustomCriteria(criteria.id, "options", e.target.value)}
+                            disabled={criteria.type !== "multiple-choice"}
+                            className={criteria.type !== "multiple-choice" ? "bg-gray-100" : ""}
+                          />
+                          {criteria.type !== "multiple-choice" && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Options are only available for Multiple Choice type
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => saveCustomCriteria(criteria.id)}
+                            disabled={!criteria.name.trim() || !criteria.type}
+                          >
+                            Save
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => cancelEditCustomCriteria(criteria.id)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-medium">{criteria.name}</h4>
+                            <Badge variant="outline">
+                              {criteria.type === "text" && "Text"}
+                              {criteria.type === "multiline-text" && "Multi-line Text"}
+                              {criteria.type === "number" && "Number"}
+                              {criteria.type === "multiple-choice" && "Multiple Choice"}
+                            </Badge>
+                          </div>
+                          {criteria.type === "multiple-choice" && criteria.options && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {criteria.options.split(",").map((option, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {option.trim()}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => editCustomCriteria(criteria.id)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteCustomCriteria(criteria.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {customCriteria.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No custom criteria defined yet. Click "Add Criteria" to create your first custom criteria.
+                  </div>
+                )}
               </div>
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCustomCriteriaModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  console.log("Creating custom criteria:", {
-                    name: customCriteriaName,
-                    type: customCriteriaType,
-                    options: customCriteriaOptions,
-                  })
-                  setShowCustomCriteriaModal(false)
-                  setCustomCriteriaName("")
-                  setCustomCriteriaType("")
-                  setCustomCriteriaOptions("")
-                }}
-              >
-                Create Criteria
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
