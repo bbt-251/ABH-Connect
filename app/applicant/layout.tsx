@@ -67,6 +67,12 @@ const navigationItems = [
     premium: false,
   },
   {
+    name: "Job Preferences",
+    href: "/applicant/job-preferences",
+    icon: Settings,
+    premium: false,
+  },
+  {
     name: "Messaging",
     href: "/applicant/messaging",
     icon: MessageSquare,
@@ -173,6 +179,7 @@ const examQuestions = [
     question: "Which quality is most important for effective leadership?",
     options: [
       "Making all decisions independently",
+      "Being the most technically skilled person",
       "Being the most technically skilled person",
       "Inspiring and motivating others",
       "Maintaining strict control over all processes",
