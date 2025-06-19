@@ -29,15 +29,9 @@ import {
   Globe,
   Plus,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 export default function CompanyManagement() {
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [industryFilter, setIndustryFilter] = useState("all")
@@ -70,6 +64,8 @@ export default function CompanyManagement() {
   })
   const [showFlagModal, setShowFlagModal] = useState(false)
   const [flagReason, setFlagReason] = useState("")
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false)
+  const [deactivateReason, setDeactivateReason] = useState("")
 
   const companies = [
     {
@@ -245,6 +241,11 @@ export default function CompanyManagement() {
     setShowFlagModal(true)
   }
 
+  const handleDeactivate = (company: any) => {
+    setSelectedCompany(company)
+    setShowDeactivateModal(true)
+  }
+
   const confirmSuspension = () => {
     console.log(`Suspending company ${selectedCompany?.name} with reason: ${suspendReason}`)
     // Update company status to suspended
@@ -302,581 +303,504 @@ export default function CompanyManagement() {
     setSelectedCompany(null)
   }
 
+  const confirmDeactivation = () => {
+    console.log(`Deactivating company ${selectedCompany?.name} with reason: ${deactivateReason}`)
+    // Update company status to deactivated
+    setShowDeactivateModal(false)
+    setDeactivateReason("")
+    setSelectedCompany(null)
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Company Management</h1>
-              <p className="text-gray-600 mt-1">Oversee and manage all registered companies</p>
-            </div>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Company
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search companies by name or email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={industryFilter} onValueChange={setIndustryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Industries</SelectItem>
-                  <SelectItem value="Technology">Technology</SelectItem>
-                  <SelectItem value="Software">Software</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Energy">Energy</SelectItem>
-                  <SelectItem value="Healthcare">Healthcare</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Companies List */}
-        <div className="space-y-4">
-          {filteredCompanies.map((company) => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{company.name}</h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {company.location}
-                        </span>
-                        <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {company.registrationDate}
-                        </span>
-                        <span className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          {company.employees}
-                        </span>
-                        <span className="flex items-center">
-                          <Briefcase className="h-4 w-4 mr-1" />
-                          {company.jobsPosted} jobs
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    {getStatusBadge(company.status)}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => handleViewDetails(company)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-
-                        {company.status === "pending" && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleApprove(company)} className="text-green-600">
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleReject(company)} className="text-red-600">
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Reject
-                            </DropdownMenuItem>
-                          </>
-                        )}
-
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(company)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Company
-                        </DropdownMenuItem>
-
-                        {company.status === "approved" && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleSuspend(company)} className="text-orange-600">
-                              <AlertTriangle className="h-4 w-4 mr-2" />
-                              Suspend
-                            </DropdownMenuItem>
-                          </>
-                        )}
-
-                        {company.status === "approved" && (
-                          <DropdownMenuItem onClick={() => handleFlag(company)} className="text-yellow-600">
-                            <AlertTriangle className="h-4 w-4 mr-2" />
-                            Flag Company
-                          </DropdownMenuItem>
-                        )}
-
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(company)} className="text-red-600">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Company
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredCompanies.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No companies found</h3>
-              <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Approval Modal */}
-      <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Approve Company</DialogTitle>
-            <DialogDescription>
-              You are about to approve {selectedCompany?.name}. Please provide a reason for approval.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="approval-reason">Approval Reason</Label>
-              <Textarea
-                id="approval-reason"
-                placeholder="Enter reason for approval..."
-                value={approvalReason}
-                onChange={(e) => setApprovalReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowApprovalModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={confirmApproval} disabled={!approvalReason.trim()}>
-                Approve Company
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Rejection Modal */}
-      <Dialog open={showRejectionModal} onOpenChange={setShowRejectionModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Company</DialogTitle>
-            <DialogDescription>
-              You are about to reject {selectedCompany?.name}. Please provide a reason for rejection.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Enter reason for rejection..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowRejectionModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={confirmRejection} disabled={!rejectionReason.trim()}>
-                Reject Company
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Company Details Modal */}
-      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Building2 className="h-5 w-5" />
-              <span>{selectedCompany?.name}</span>
-            </DialogTitle>
-            <DialogDescription>Complete company profile and activity overview</DialogDescription>
-          </DialogHeader>
-          {selectedCompany && (
-            <div className="space-y-6">
-              {/* Company Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold mb-3">Company Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.email}
-                    </div>
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.phone}
-                    </div>
-                    <div className="flex items-center">
-                      <Globe className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.website}
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.location}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-3">Admin Contact</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>{selectedCompany.adminContact}</div>
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.adminEmail}
-                    </div>
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                      {selectedCompany.adminPhone}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setOpenDropdown(null)
+        }
+      }}
+    >
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
               <div>
-                <h4 className="font-semibold mb-3">Description</h4>
-                <p className="text-sm text-gray-600">{selectedCompany.description}</p>
+                <h1 className="text-3xl font-bold text-gray-900">Company Management</h1>
+                <p className="text-gray-600 mt-1">Oversee and manage all registered companies</p>
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{selectedCompany.jobsPosted}</div>
-                  <div className="text-sm text-gray-600">Jobs Posted</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{selectedCompany.applications}</div>
-                  <div className="text-sm text-gray-600">Applications</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{selectedCompany.employees}</div>
-                  <div className="text-sm text-gray-600">Employees</div>
-                </div>
-              </div>
-
-              {/* Status and Actions */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">Status:</span>
-                  {getStatusBadge(selectedCompany.status)}
-                </div>
-                <div className="flex space-x-2">
-                  {selectedCompany.status === "pending" && (
-                    <>
-                      <Button size="sm" onClick={() => handleApprove(selectedCompany)}>
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleReject(selectedCompany)}>
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  <Button size="sm" variant="outline">
-                    Edit
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Suspend Modal */}
-      <Dialog open={showSuspendModal} onOpenChange={setShowSuspendModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Suspend Company</DialogTitle>
-            <DialogDescription>
-              You are about to suspend {selectedCompany?.name}. Please provide a reason for suspension.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="suspend-reason">Suspension Reason</Label>
-              <Textarea
-                id="suspend-reason"
-                placeholder="Enter reason for suspension..."
-                value={suspendReason}
-                onChange={(e) => setSuspendReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowSuspendModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={confirmSuspension} disabled={!suspendReason.trim()}>
-                Suspend Company
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Modal */}
-      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Company</DialogTitle>
-            <DialogDescription>
-              You are about to permanently delete {selectedCompany?.name}. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="delete-reason">Deletion Reason</Label>
-              <Textarea
-                id="delete-reason"
-                placeholder="Enter reason for deletion..."
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={confirmDeletion} disabled={!deleteReason.trim()}>
-                Delete Company
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Company Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Company</DialogTitle>
-            <DialogDescription>Manually create a new company profile with all required information.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="create-name">Company Name *</Label>
-                <Input
-                  id="create-name"
-                  value={createFormData.name}
-                  onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
-                  placeholder="Enter company name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-industry">Industry *</Label>
-                <Select
-                  value={createFormData.industry}
-                  onValueChange={(value) => setCreateFormData({ ...createFormData, industry: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                    <SelectItem value="Software">Software</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Healthcare">Healthcare</SelectItem>
-                    <SelectItem value="Energy">Energy</SelectItem>
-                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                    <SelectItem value="Retail">Retail</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="create-email">Company Email *</Label>
-                <Input
-                  id="create-email"
-                  type="email"
-                  value={createFormData.email}
-                  onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                  placeholder="company@example.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-phone">Phone Number</Label>
-                <Input
-                  id="create-phone"
-                  value={createFormData.phone}
-                  onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-website">Website</Label>
-                <Input
-                  id="create-website"
-                  value={createFormData.website}
-                  onChange={(e) => setCreateFormData({ ...createFormData, website: e.target.value })}
-                  placeholder="www.company.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-location">Location *</Label>
-                <Input
-                  id="create-location"
-                  value={createFormData.location}
-                  onChange={(e) => setCreateFormData({ ...createFormData, location: e.target.value })}
-                  placeholder="City, State/Country"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-employees">Company Size</Label>
-                <Select
-                  value={createFormData.employees}
-                  onValueChange={(value) => setCreateFormData({ ...createFormData, employees: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select company size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-10">1-10 employees</SelectItem>
-                    <SelectItem value="11-50">11-50 employees</SelectItem>
-                    <SelectItem value="51-100">51-100 employees</SelectItem>
-                    <SelectItem value="101-500">101-500 employees</SelectItem>
-                    <SelectItem value="501-1000">501-1000 employees</SelectItem>
-                    <SelectItem value="1000+">1000+ employees</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="create-admin-contact">Admin Contact Name *</Label>
-                <Input
-                  id="create-admin-contact"
-                  value={createFormData.adminContact}
-                  onChange={(e) => setCreateFormData({ ...createFormData, adminContact: e.target.value })}
-                  placeholder="John Smith"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-admin-email">Admin Email *</Label>
-                <Input
-                  id="create-admin-email"
-                  type="email"
-                  value={createFormData.adminEmail}
-                  onChange={(e) => setCreateFormData({ ...createFormData, adminEmail: e.target.value })}
-                  placeholder="admin@company.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="create-admin-phone">Admin Phone</Label>
-                <Input
-                  id="create-admin-phone"
-                  value={createFormData.adminPhone}
-                  onChange={(e) => setCreateFormData({ ...createFormData, adminPhone: e.target.value })}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="create-description">Company Description</Label>
-              <Textarea
-                id="create-description"
-                value={createFormData.description}
-                onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
-                placeholder="Brief description of the company..."
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateCompany}
-                disabled={
-                  !createFormData.name ||
-                  !createFormData.industry ||
-                  !createFormData.email ||
-                  !createFormData.location ||
-                  !createFormData.adminContact ||
-                  !createFormData.adminEmail
-                }
-              >
+              <Button onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Create Company
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
 
-      {/* Edit Company Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-            <DialogDescription>Update company information and details.</DialogDescription>
-          </DialogHeader>
-          {editFormData && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Filters */}
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search companies by name or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={industryFilter} onValueChange={setIndustryFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Industries</SelectItem>
+                    <SelectItem value="Technology">Technology</SelectItem>
+                    <SelectItem value="Software">Software</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Energy">Energy</SelectItem>
+                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Companies List */}
+          <div className="space-y-4">
+            {filteredCompanies.map((company) => (
+              <Card key={company.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Building2 className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{company.name}</h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                          <span className="flex items-center">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {company.location}
+                          </span>
+                          <span className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            {company.registrationDate}
+                          </span>
+                          <span className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            {company.employees}
+                          </span>
+                          <span className="flex items-center">
+                            <Briefcase className="h-4 w-4 mr-1" />
+                            {company.jobsPosted} jobs
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      {getStatusBadge(company.status)}
+                      <div className="relative z-10">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 relative z-20"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenDropdown(openDropdown === company.id ? null : company.id)
+                          }}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+
+                        {openDropdown === company.id && (
+                          <div
+                            className="absolute right-0 top-8 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  handleViewDetails(company)
+                                  setOpenDropdown(null)
+                                }}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </button>
+
+                              {company.status === "pending" && (
+                                <>
+                                  <hr className="my-1 border-gray-200" />
+                                  <button
+                                    onClick={() => {
+                                      handleApprove(company)
+                                      setOpenDropdown(null)
+                                    }}
+                                    className="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleReject(company)
+                                      setOpenDropdown(null)
+                                    }}
+                                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+
+                              <hr className="my-1 border-gray-200" />
+                              <button
+                                onClick={() => {
+                                  handleEdit(company)
+                                  setOpenDropdown(null)
+                                }}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Company
+                              </button>
+
+                              {company.status === "approved" && (
+                                <>
+                                  <hr className="my-1 border-gray-200" />
+                                  <button
+                                    onClick={() => {
+                                      handleSuspend(company)
+                                      setOpenDropdown(null)
+                                    }}
+                                    className="flex items-center w-full px-4 py-2 text-sm text-orange-600 hover:bg-gray-100"
+                                  >
+                                    <AlertTriangle className="h-4 w-4 mr-2" />
+                                    Suspend
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleFlag(company)
+                                      setOpenDropdown(null)
+                                    }}
+                                    className="flex items-center w-full px-4 py-2 text-sm text-yellow-600 hover:bg-gray-100"
+                                  >
+                                    <AlertTriangle className="h-4 w-4 mr-2" />
+                                    Flag Company
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleDeactivate(company)
+                                      setOpenDropdown(null)
+                                    }}
+                                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Deactivate
+                                  </button>
+                                </>
+                              )}
+
+                              <hr className="my-1 border-gray-200" />
+                              <button
+                                onClick={() => {
+                                  handleDelete(company)
+                                  setOpenDropdown(null)
+                                }}
+                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Company
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredCompanies.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No companies found</h3>
+                <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Approval Modal */}
+        <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Approve Company</DialogTitle>
+              <DialogDescription>
+                You are about to approve {selectedCompany?.name}. Please provide a reason for approval.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="approval-reason">Approval Reason</Label>
+                <Textarea
+                  id="approval-reason"
+                  placeholder="Enter reason for approval..."
+                  value={approvalReason}
+                  onChange={(e) => setApprovalReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowApprovalModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmApproval} disabled={!approvalReason.trim()}>
+                  Approve Company
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Modal */}
+        <Dialog open={showRejectionModal} onOpenChange={setShowRejectionModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Company</DialogTitle>
+              <DialogDescription>
+                You are about to reject {selectedCompany?.name}. Please provide a reason for rejection.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejection-reason">Rejection Reason</Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="Enter reason for rejection..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowRejectionModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmRejection} disabled={!rejectionReason.trim()}>
+                  Reject Company
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Company Details Modal */}
+        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Building2 className="h-5 w-5" />
+                <span>{selectedCompany?.name}</span>
+              </DialogTitle>
+              <DialogDescription>Complete company profile and activity overview</DialogDescription>
+            </DialogHeader>
+            {selectedCompany && (
+              <div className="space-y-6">
+                {/* Company Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3">Company Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.email}
+                      </div>
+                      <div className="flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.phone}
+                      </div>
+                      <div className="flex items-center">
+                        <Globe className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.website}
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.location}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-3">Admin Contact</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>{selectedCompany.adminContact}</div>
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.adminEmail}
+                      </div>
+                      <div className="flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                        {selectedCompany.adminPhone}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h4 className="font-semibold mb-3">Description</h4>
+                  <p className="text-sm text-gray-600">{selectedCompany.description}</p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{selectedCompany.jobsPosted}</div>
+                    <div className="text-sm text-gray-600">Jobs Posted</div>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{selectedCompany.applications}</div>
+                    <div className="text-sm text-gray-600">Applications</div>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{selectedCompany.employees}</div>
+                    <div className="text-sm text-gray-600">Employees</div>
+                  </div>
+                </div>
+
+                {/* Status and Actions */}
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">Status:</span>
+                    {getStatusBadge(selectedCompany.status)}
+                  </div>
+                  <div className="flex space-x-2">
+                    {selectedCompany.status === "pending" && (
+                      <>
+                        <Button size="sm" onClick={() => handleApprove(selectedCompany)}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleReject(selectedCompany)}>
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    <Button size="sm" variant="outline">
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Suspend Modal */}
+        <Dialog open={showSuspendModal} onOpenChange={setShowSuspendModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Suspend Company</DialogTitle>
+              <DialogDescription>
+                You are about to suspend {selectedCompany?.name}. Please provide a reason for suspension.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="suspend-reason">Suspension Reason</Label>
+                <Textarea
+                  id="suspend-reason"
+                  placeholder="Enter reason for suspension..."
+                  value={suspendReason}
+                  onChange={(e) => setSuspendReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowSuspendModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmSuspension} disabled={!suspendReason.trim()}>
+                  Suspend Company
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Modal */}
+        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Company</DialogTitle>
+              <DialogDescription>
+                You are about to permanently delete {selectedCompany?.name}. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="delete-reason">Deletion Reason</Label>
+                <Textarea
+                  id="delete-reason"
+                  placeholder="Enter reason for deletion..."
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmDeletion} disabled={!deleteReason.trim()}>
+                  Delete Company
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Company Modal */}
+        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Company</DialogTitle>
+              <DialogDescription>
+                Manually create a new company profile with all required information.
+              </DialogDescription>
+            </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-name">Company Name *</Label>
+                  <Label htmlFor="create-name">Company Name *</Label>
                   <Input
-                    id="edit-name"
-                    value={editFormData.name || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    id="create-name"
+                    value={createFormData.name}
+                    onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
                     placeholder="Enter company name"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-industry">Industry *</Label>
+                  <Label htmlFor="create-industry">Industry *</Label>
                   <Select
-                    value={editFormData.industry || ""}
-                    onValueChange={(value) => setEditFormData({ ...editFormData, industry: value })}
+                    value={createFormData.industry}
+                    onValueChange={(value) => setCreateFormData({ ...createFormData, industry: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select industry" />
@@ -894,47 +818,47 @@ export default function CompanyManagement() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit-email">Company Email *</Label>
+                  <Label htmlFor="create-email">Company Email *</Label>
                   <Input
-                    id="edit-email"
+                    id="create-email"
                     type="email"
-                    value={editFormData.email || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    value={createFormData.email}
+                    onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                     placeholder="company@example.com"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-phone">Phone Number</Label>
+                  <Label htmlFor="create-phone">Phone Number</Label>
                   <Input
-                    id="edit-phone"
-                    value={editFormData.phone || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    id="create-phone"
+                    value={createFormData.phone}
+                    onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-website">Website</Label>
+                  <Label htmlFor="create-website">Website</Label>
                   <Input
-                    id="edit-website"
-                    value={editFormData.website || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, website: e.target.value })}
+                    id="create-website"
+                    value={createFormData.website}
+                    onChange={(e) => setCreateFormData({ ...createFormData, website: e.target.value })}
                     placeholder="www.company.com"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-location">Location *</Label>
+                  <Label htmlFor="create-location">Location *</Label>
                   <Input
-                    id="edit-location"
-                    value={editFormData.location || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                    id="create-location"
+                    value={createFormData.location}
+                    onChange={(e) => setCreateFormData({ ...createFormData, location: e.target.value })}
                     placeholder="City, State/Country"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-employees">Company Size</Label>
+                  <Label htmlFor="create-employees">Company Size</Label>
                   <Select
-                    value={editFormData.employees || ""}
-                    onValueChange={(value) => setEditFormData({ ...editFormData, employees: value })}
+                    value={createFormData.employees}
+                    onValueChange={(value) => setCreateFormData({ ...createFormData, employees: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select company size" />
@@ -950,106 +874,295 @@ export default function CompanyManagement() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit-admin-contact">Admin Contact Name *</Label>
+                  <Label htmlFor="create-admin-contact">Admin Contact Name *</Label>
                   <Input
-                    id="edit-admin-contact"
-                    value={editFormData.adminContact || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, adminContact: e.target.value })}
+                    id="create-admin-contact"
+                    value={createFormData.adminContact}
+                    onChange={(e) => setCreateFormData({ ...createFormData, adminContact: e.target.value })}
                     placeholder="John Smith"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-admin-email">Admin Email *</Label>
+                  <Label htmlFor="create-admin-email">Admin Email *</Label>
                   <Input
-                    id="edit-admin-email"
+                    id="create-admin-email"
                     type="email"
-                    value={editFormData.adminEmail || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, adminEmail: e.target.value })}
+                    value={createFormData.adminEmail}
+                    onChange={(e) => setCreateFormData({ ...createFormData, adminEmail: e.target.value })}
                     placeholder="admin@company.com"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-admin-phone">Admin Phone</Label>
+                  <Label htmlFor="create-admin-phone">Admin Phone</Label>
                   <Input
-                    id="edit-admin-phone"
-                    value={editFormData.adminPhone || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, adminPhone: e.target.value })}
+                    id="create-admin-phone"
+                    value={createFormData.adminPhone}
+                    onChange={(e) => setCreateFormData({ ...createFormData, adminPhone: e.target.value })}
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="edit-description">Company Description</Label>
+                <Label htmlFor="create-description">Company Description</Label>
                 <Textarea
-                  id="edit-description"
-                  value={editFormData.description || ""}
-                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  id="create-description"
+                  value={createFormData.description}
+                  onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
                   placeholder="Brief description of the company..."
                   rows={3}
                 />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleUpdateCompany}
+                  onClick={handleCreateCompany}
                   disabled={
-                    !editFormData.name ||
-                    !editFormData.industry ||
-                    !editFormData.email ||
-                    !editFormData.location ||
-                    !editFormData.adminContact ||
-                    !editFormData.adminEmail
+                    !createFormData.name ||
+                    !createFormData.industry ||
+                    !createFormData.email ||
+                    !createFormData.location ||
+                    !createFormData.adminContact ||
+                    !createFormData.adminEmail
                   }
                 >
-                  Update Company
+                  Create Company
                 </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Flag Modal */}
-      <Dialog open={showFlagModal} onOpenChange={setShowFlagModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Flag Company</DialogTitle>
-            <DialogDescription>
-              You are about to flag {selectedCompany?.name} for review. Please provide a reason.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="flag-reason">Flag Reason</Label>
-              <Textarea
-                id="flag-reason"
-                placeholder="Enter reason for flagging (e.g., violation, fake data, suspicious activity)..."
-                value={flagReason}
-                onChange={(e) => setFlagReason(e.target.value)}
-              />
+        {/* Edit Company Modal */}
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Company</DialogTitle>
+              <DialogDescription>Update company information and details.</DialogDescription>
+            </DialogHeader>
+            {editFormData && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-name">Company Name *</Label>
+                    <Input
+                      id="edit-name"
+                      value={editFormData.name || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      placeholder="Enter company name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-industry">Industry *</Label>
+                    <Select
+                      value={editFormData.industry || ""}
+                      onValueChange={(value) => setEditFormData({ ...editFormData, industry: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Technology">Technology</SelectItem>
+                        <SelectItem value="Software">Software</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
+                        <SelectItem value="Healthcare">Healthcare</SelectItem>
+                        <SelectItem value="Energy">Energy</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Retail">Retail</SelectItem>
+                        <SelectItem value="Education">Education</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-email">Company Email *</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={editFormData.email || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      placeholder="company@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Phone Number</Label>
+                    <Input
+                      id="edit-phone"
+                      value={editFormData.phone || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-website">Website</Label>
+                    <Input
+                      id="edit-website"
+                      value={editFormData.website || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, website: e.target.value })}
+                      placeholder="www.company.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-location">Location *</Label>
+                    <Input
+                      id="edit-location"
+                      value={editFormData.location || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                      placeholder="City, State/Country"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-employees">Company Size</Label>
+                    <Select
+                      value={editFormData.employees || ""}
+                      onValueChange={(value) => setEditFormData({ ...editFormData, employees: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1-10 employees</SelectItem>
+                        <SelectItem value="11-50">11-50 employees</SelectItem>
+                        <SelectItem value="51-100">51-100 employees</SelectItem>
+                        <SelectItem value="101-500">101-500 employees</SelectItem>
+                        <SelectItem value="501-1000">501-1000 employees</SelectItem>
+                        <SelectItem value="1000+">1000+ employees</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-admin-contact">Admin Contact Name *</Label>
+                    <Input
+                      id="edit-admin-contact"
+                      value={editFormData.adminContact || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, adminContact: e.target.value })}
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-admin-email">Admin Email *</Label>
+                    <Input
+                      id="edit-admin-email"
+                      type="email"
+                      value={editFormData.adminEmail || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, adminEmail: e.target.value })}
+                      placeholder="admin@company.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-admin-phone">Admin Phone</Label>
+                    <Input
+                      id="edit-admin-phone"
+                      value={editFormData.adminPhone || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, adminPhone: e.target.value })}
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="edit-description">Company Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editFormData.description || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                    placeholder="Brief description of the company..."
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdateCompany}
+                    disabled={
+                      !editFormData.name ||
+                      !editFormData.industry ||
+                      !editFormData.email ||
+                      !editFormData.location ||
+                      !editFormData.adminContact ||
+                      !editFormData.adminEmail
+                    }
+                  >
+                    Update Company
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Flag Modal */}
+        <Dialog open={showFlagModal} onOpenChange={setShowFlagModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Flag Company</DialogTitle>
+              <DialogDescription>
+                You are about to flag {selectedCompany?.name} for review. Please provide a reason.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="flag-reason">Flag Reason</Label>
+                <Textarea
+                  id="flag-reason"
+                  placeholder="Enter reason for flagging (e.g., violation, fake data, suspicious activity)..."
+                  value={flagReason}
+                  onChange={(e) => setFlagReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowFlagModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    console.log(`Flagging company ${selectedCompany?.name} with reason: ${flagReason}`)
+                    setShowFlagModal(false)
+                    setFlagReason("")
+                    setSelectedCompany(null)
+                  }}
+                  disabled={!flagReason.trim()}
+                >
+                  Flag Company
+                </Button>
+              </div>
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowFlagModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  console.log(`Flagging company ${selectedCompany?.name} with reason: ${flagReason}`)
-                  setShowFlagModal(false)
-                  setFlagReason("")
-                  setSelectedCompany(null)
-                }}
-                disabled={!flagReason.trim()}
-              >
-                Flag Company
-              </Button>
+          </DialogContent>
+        </Dialog>
+
+        {/* Deactivate Modal */}
+        <Dialog open={showDeactivateModal} onOpenChange={setShowDeactivateModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Deactivate Company</DialogTitle>
+              <DialogDescription>
+                You are about to deactivate {selectedCompany?.name}. Please provide a reason for deactivation.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="deactivate-reason">Deactivation Reason</Label>
+                <Textarea
+                  id="deactivate-reason"
+                  placeholder="Enter reason for deactivation (e.g., violation, fake data, policy breach)..."
+                  value={deactivateReason}
+                  onChange={(e) => setDeactivateReason(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowDeactivateModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmDeactivation} disabled={!deactivateReason.trim()}>
+                  Deactivate Company
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }
