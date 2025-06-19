@@ -68,6 +68,8 @@ export default function CompanyManagement() {
     adminEmail: "",
     adminPhone: "",
   })
+  const [showFlagModal, setShowFlagModal] = useState(false)
+  const [flagReason, setFlagReason] = useState("")
 
   const companies = [
     {
@@ -238,6 +240,11 @@ export default function CompanyManagement() {
     setShowEditModal(true)
   }
 
+  const handleFlag = (company: any) => {
+    setSelectedCompany(company)
+    setShowFlagModal(true)
+  }
+
   const confirmSuspension = () => {
     console.log(`Suspending company ${selectedCompany?.name} with reason: ${suspendReason}`)
     // Update company status to suspended
@@ -394,43 +401,57 @@ export default function CompanyManagement() {
                     {getStatusBadge(company.status)}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => handleViewDetails(company)}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
+
                         {company.status === "pending" && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleApprove(company)}>
+                            <DropdownMenuItem onClick={() => handleApprove(company)} className="text-green-600">
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Approve
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleReject(company)}>
+                            <DropdownMenuItem onClick={() => handleReject(company)} className="text-red-600">
                               <XCircle className="h-4 w-4 mr-2" />
                               Reject
                             </DropdownMenuItem>
                           </>
                         )}
+
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleEdit(company)}>
                           <Edit className="h-4 w-4 mr-2" />
-                          Edit
+                          Edit Company
                         </DropdownMenuItem>
+
                         {company.status === "approved" && (
-                          <DropdownMenuItem onClick={() => handleSuspend(company)}>
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleSuspend(company)} className="text-orange-600">
+                              <AlertTriangle className="h-4 w-4 mr-2" />
+                              Suspend
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        {company.status === "approved" && (
+                          <DropdownMenuItem onClick={() => handleFlag(company)} className="text-yellow-600">
                             <AlertTriangle className="h-4 w-4 mr-2" />
-                            Suspend
+                            Flag Company
                           </DropdownMenuItem>
                         )}
+
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(company)}>
+                        <DropdownMenuItem onClick={() => handleDelete(company)} className="text-red-600">
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
+                          Delete Company
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -987,6 +1008,46 @@ export default function CompanyManagement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Flag Modal */}
+      <Dialog open={showFlagModal} onOpenChange={setShowFlagModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Flag Company</DialogTitle>
+            <DialogDescription>
+              You are about to flag {selectedCompany?.name} for review. Please provide a reason.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="flag-reason">Flag Reason</Label>
+              <Textarea
+                id="flag-reason"
+                placeholder="Enter reason for flagging (e.g., violation, fake data, suspicious activity)..."
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowFlagModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  console.log(`Flagging company ${selectedCompany?.name} with reason: ${flagReason}`)
+                  setShowFlagModal(false)
+                  setFlagReason("")
+                  setSelectedCompany(null)
+                }}
+                disabled={!flagReason.trim()}
+              >
+                Flag Company
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
