@@ -34,6 +34,9 @@ import {
   Timer,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Send,
+  Paperclip,
 } from "lucide-react"
 import {
   Dialog,
@@ -46,57 +49,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-
-const navigationItems = [
-  {
-    name: "Dashboard",
-    href: "/applicant",
-    icon: LayoutDashboard,
-    premium: false,
-  },
-  {
-    name: "My Applications",
-    href: "/applicant/applications",
-    icon: FileText,
-    premium: false,
-  },
-  {
-    name: "Profile Management",
-    href: "/applicant/profile",
-    icon: User,
-    premium: false,
-  },
-  {
-    name: "Job Preferences",
-    href: "/applicant/job-preferences",
-    icon: Settings,
-    premium: false,
-  },
-  {
-    name: "Messaging",
-    href: "/applicant/messaging",
-    icon: MessageSquare,
-    premium: true,
-  },
-  {
-    name: "CV Builder & Analysis",
-    href: "/applicant/cv-builder",
-    icon: FileCheck,
-    premium: true,
-  },
-  {
-    name: "Training Development",
-    href: "/applicant/training",
-    icon: GraduationCap,
-    premium: true,
-  },
-  {
-    name: "Coaching",
-    href: "/applicant/coaching",
-    icon: Users,
-    premium: true,
-  },
-]
 
 // Sample exam questions - expanded for multiple pages
 const examQuestions = [
@@ -209,6 +161,71 @@ export default function ApplicantLayout({
   const [examTimeRemaining, setExamTimeRemaining] = useState(30 * 60) // 30 minutes in seconds
   const [examAnswers, setExamAnswers] = useState({})
   const [currentPage, setCurrentPage] = useState(0)
+  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [showComposeModal, setShowComposeModal] = useState(false)
+
+  // Move navigationItems inside the component so it has access to state setters
+  const navigationItems = [
+    {
+      name: "Dashboard",
+      href: "/applicant",
+      icon: LayoutDashboard,
+      premium: false,
+    },
+    {
+      name: "My Applications",
+      href: "/applicant/applications",
+      icon: FileText,
+      premium: false,
+    },
+    {
+      name: "Profile Management",
+      href: "/applicant/profile",
+      icon: User,
+      premium: false,
+    },
+    {
+      name: "Job Preferences",
+      href: "/applicant/job-preferences",
+      icon: Settings,
+      premium: false,
+    },
+    {
+      name: "Message",
+      href: "#",
+      icon: MessageSquare,
+      premium: false,
+      onClick: (e) => {
+        e.preventDefault()
+        setShowMessageModal(true)
+        setSidebarOpen(false)
+      },
+    },
+    {
+      name: "Messaging",
+      href: "/applicant/messaging",
+      icon: MessageSquare,
+      premium: true,
+    },
+    {
+      name: "CV Builder & Analysis",
+      href: "/applicant/cv-builder",
+      icon: FileCheck,
+      premium: true,
+    },
+    {
+      name: "Training Development",
+      href: "/applicant/training",
+      icon: GraduationCap,
+      premium: true,
+    },
+    {
+      name: "Coaching",
+      href: "/applicant/coaching",
+      icon: Users,
+      premium: true,
+    },
+  ]
 
   const totalPages = Math.ceil(examQuestions.length / QUESTIONS_PER_PAGE)
   const currentQuestions = examQuestions.slice(currentPage * QUESTIONS_PER_PAGE, (currentPage + 1) * QUESTIONS_PER_PAGE)
@@ -279,6 +296,20 @@ export default function ApplicantLayout({
     setCurrentPage(pageIndex)
   }
 
+  const handleClick = (e: React.MouseEvent, item) => {
+    if (item.premium) {
+      e.preventDefault()
+      setShowPremiumModal(true)
+      return
+    }
+    if (item.onClick) {
+      e.preventDefault()
+      item.onClick(e)
+      return
+    }
+    setSidebarOpen(false)
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile sidebar overlay */}
@@ -315,20 +346,11 @@ export default function ApplicantLayout({
               const Icon = item.icon
               const isActive = pathname === item.href
 
-              const handleClick = (e: React.MouseEvent) => {
-                if (item.premium) {
-                  e.preventDefault()
-                  setShowPremiumModal(true)
-                  return
-                }
-                setSidebarOpen(false)
-              }
-
               return (
                 <div key={item.name} className="relative">
                   {item.premium ? (
                     <button
-                      onClick={handleClick}
+                      onClick={(e) => handleClick(e, item)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
                           ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border border-amber-200"
@@ -338,6 +360,19 @@ export default function ApplicantLayout({
                       <Icon className="w-5 h-5" />
                       <span className="flex-1 text-left">{item.name}</span>
                       <Crown className="w-4 h-4 text-amber-500" />
+                    </button>
+                  ) : item.onClick ? (
+                    <button
+                      onClick={(e) => {
+                        item.onClick(e)
+                        setSidebarOpen(false)
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive ? "bg-[#0a3141] text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {item.name}
                     </button>
                   ) : (
                     <Link
@@ -656,6 +691,228 @@ export default function ApplicantLayout({
                 )}
               </div>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Modal */}
+      <Dialog open={showMessageModal} onOpenChange={setShowMessageModal}>
+        <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Messages
+            </DialogTitle>
+            <DialogDescription>Connect with recruiters and companies</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Contacts Sidebar */}
+            <div className="w-1/3 border-r flex flex-col">
+              <div className="p-4 border-b">
+                <Button
+                  className="w-full bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+                  onClick={() => setShowComposeModal(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Message
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-2 space-y-1">
+                  {/* Sample conversations */}
+                  <div className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer border-l-4 border-[#0a3141] bg-blue-50">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-[#0a3141] text-white">GT</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm">Google Talent Team</p>
+                          <span className="text-xs text-gray-500">2h</span>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">Thank you for your application...</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="text-xs text-green-600">Active</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-blue-600 text-white">MS</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm">Microsoft HR</p>
+                          <span className="text-xs text-gray-500">1d</span>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">We'd like to schedule an interview...</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                          <span className="text-xs text-yellow-600">Pending</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-gray-600 text-white">AP</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-sm">Apple Recruiter</p>
+                        <p className="text-sm text-gray-500">Your profile looks interesting...</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                          <span className="text-xs text-gray-500">Read</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
+              {/* Chat Header */}
+              <div className="p-4 border-b bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback className="bg-[#0a3141] text-white">GT</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">Google Talent Team</p>
+                    <p className="text-sm text-gray-500">Senior Software Engineer Position</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Received message */}
+                <div className="flex gap-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-[#0a3141] text-white text-xs">GT</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="bg-gray-100 rounded-lg p-3 max-w-md">
+                      <p className="text-sm">
+                        Thank you for your application for the Senior Software Engineer position. We've reviewed your
+                        profile and would like to move forward with the next steps.
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
+                  </div>
+                </div>
+
+                {/* Sent message */}
+                <div className="flex gap-3 justify-end">
+                  <div className="flex-1 flex flex-col items-end">
+                    <div className="bg-[#0a3141] text-white rounded-lg p-3 max-w-md">
+                      <p className="text-sm">
+                        Thank you for considering my application! I'm very excited about this opportunity and would be
+                        happy to discuss further.
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
+                  </div>
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                </div>
+
+                {/* Received message */}
+                <div className="flex gap-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-[#0a3141] text-white text-xs">GT</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="bg-gray-100 rounded-lg p-3 max-w-md">
+                      <p className="text-sm">
+                        Great! We'd like to schedule a technical interview. Are you available next week? Please let us
+                        know your preferred time slots.
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">30 minutes ago</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="p-4 border-t">
+                <div className="flex gap-2">
+                  <Textarea placeholder="Type your message..." className="flex-1 min-h-[60px] resize-none" rows={2} />
+                  <div className="flex flex-col gap-2">
+                    <Button size="sm" variant="outline">
+                      <Paperclip className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white">
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Compose Message Modal */}
+      <Dialog open={showComposeModal} onOpenChange={setShowComposeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Message</DialogTitle>
+            <DialogDescription>Send a message to a recruiter or company</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="recipient">To</Label>
+              <select className="w-full mt-1 p-2 border rounded-md">
+                <option value="">Select recipient...</option>
+                <option value="google">Google Talent Team</option>
+                <option value="microsoft">Microsoft HR</option>
+                <option value="apple">Apple Recruiter</option>
+                <option value="netflix">Netflix Hiring Manager</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <input
+                type="text"
+                id="subject"
+                className="w-full mt-1 p-2 border rounded-md"
+                placeholder="Enter subject..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="message">Message</Label>
+              <Textarea id="message" className="mt-1 min-h-[120px]" placeholder="Type your message..." />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowComposeModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#0a3141] hover:bg-[#1a4a5c] text-white"
+              onClick={() => {
+                setShowComposeModal(false)
+                // Handle send message
+              }}
+            >
+              Send Message
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
