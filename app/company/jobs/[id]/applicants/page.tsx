@@ -203,6 +203,7 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
   const [noteColorFilter, setNoteColorFilter] = useState("all")
   const [notePinFilter, setNotePinFilter] = useState("all")
   const [noteColorFilterMain, setNoteColorFilterMain] = useState("all")
+  const [noteTagFilter, setNoteTagFilter] = useState("all")
 
   const [showCreateCriteriaSetModal, setShowCreateCriteriaSetModal] = useState(false)
   const [showCustomCriteriaModal, setShowCustomCriteriaModal] = useState(false)
@@ -253,8 +254,8 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
     },
   ])
 
-  const [showNotesModal, setShowNotesModal] = useState(false)
-  const [showAddNoteModal, setShowAddNoteModal] = useState(false)
+  const [showNotesModal, setShowAddNoteModal] = useState(false)
+  const [showAddNoteModal, setShowNotesModal] = useState(false)
   const [editingNote, setEditingNote] = useState<any>(null)
   const [noteContent, setNoteContent] = useState("")
   const [noteColor, setNoteColor] = useState("blue")
@@ -378,6 +379,11 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
     // Filter by color using main filter
     if (noteColorFilterMain !== "all") {
       applicantNotes = applicantNotes.filter((note) => note.color === noteColorFilterMain)
+    }
+
+    // Filter by tag using main filter
+    if (noteTagFilter !== "all") {
+      applicantNotes = applicantNotes.filter((note) => note.tags.includes(noteTagFilter))
     }
 
     return applicantNotes.sort((a, b) => {
@@ -505,7 +511,7 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-9 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-10 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -616,6 +622,24 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
               <SelectItem value="red">🔴 Red Notes</SelectItem>
               <SelectItem value="purple">🟣 Purple Notes</SelectItem>
               <SelectItem value="gray">⚪ Gray Notes</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={noteTagFilter} onValueChange={setNoteTagFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Note Tags" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tags</SelectItem>
+              <SelectItem value="Top Candidate">🏆 Top Candidate</SelectItem>
+              <SelectItem value="Follow up">📞 Follow up</SelectItem>
+              <SelectItem value="Concern">⚠️ Concern</SelectItem>
+              <SelectItem value="Strong Portfolio">💼 Strong Portfolio</SelectItem>
+              <SelectItem value="Good Fit">✅ Good Fit</SelectItem>
+              <SelectItem value="Salary">💰 Salary</SelectItem>
+              <SelectItem value="Availability">📅 Availability</SelectItem>
+              <SelectItem value="Skills Gap">📚 Skills Gap</SelectItem>
+              <SelectItem value="Culture Fit">🤝 Culture Fit</SelectItem>
+              <SelectItem value="Interview Ready">🎯 Interview Ready</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -943,7 +967,7 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                           </div>
 
                           {/* Replace the old Note Filters section with this simpler version */}
-                          {(notePinFilter !== "all" || noteColorFilterMain !== "all") && (
+                          {(notePinFilter !== "all" || noteColorFilterMain !== "all" || noteTagFilter !== "all") && (
                             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm text-blue-800">
@@ -958,6 +982,11 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                                       {noteColors.find((c) => c.value === noteColorFilterMain)?.label} Notes
                                     </Badge>
                                   )}
+                                  {noteTagFilter !== "all" && (
+                                    <Badge variant="outline" className="text-blue-600">
+                                      🏷️ {noteTagFilter}
+                                    </Badge>
+                                  )}
                                 </div>
                                 <Button
                                   variant="ghost"
@@ -965,6 +994,7 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                                   onClick={() => {
                                     setNotePinFilter("all")
                                     setNoteColorFilterMain("all")
+                                    setNoteTagFilter("all")
                                   }}
                                   className="text-xs"
                                 >
