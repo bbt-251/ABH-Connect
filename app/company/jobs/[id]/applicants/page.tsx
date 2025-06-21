@@ -200,6 +200,9 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
   const [selectedApplicants, setSelectedApplicants] = useState<number[]>([])
   const [matchingCriteriaFilter, setMatchingCriteriaFilter] = useState("all")
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
+  const [noteColorFilter, setNoteColorFilter] = useState("all")
+  const [notePinFilter, setNotePinFilter] = useState("all")
+  const [noteColorFilterMain, setNoteColorFilterMain] = useState("all")
 
   const [showCreateCriteriaSetModal, setShowCreateCriteriaSetModal] = useState(false)
   const [showCustomCriteriaModal, setShowCustomCriteriaModal] = useState(false)
@@ -209,6 +212,55 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
     { id: "remote_work", name: "Remote Work Preference", type: "select", options: ["Yes", "No", "Hybrid"] },
     { id: "salary_range", name: "Expected Salary Range", type: "number", unit: "USD" },
   ])
+
+  // Note Management State
+  const [notes, setNotes] = useState<any[]>([
+    {
+      id: 1,
+      applicantId: 1,
+      content: "Great portfolio and communication skills. Very impressed with the React projects shown.",
+      author: "John Smith",
+      createdAt: "2024-01-15T10:30:00Z",
+      updatedAt: "2024-01-15T10:30:00Z",
+      isPinned: true,
+      color: "blue",
+      tags: ["Top Candidate", "Strong Portfolio"],
+      type: "feedback",
+    },
+    {
+      id: 2,
+      applicantId: 1,
+      content: "Need to follow up on salary expectations. Mentioned $80k-100k range.",
+      author: "Sarah Johnson",
+      createdAt: "2024-01-14T15:45:00Z",
+      updatedAt: "2024-01-14T15:45:00Z",
+      isPinned: false,
+      color: "yellow",
+      tags: ["Follow up", "Salary"],
+      type: "reminder",
+    },
+    {
+      id: 3,
+      applicantId: 2,
+      content: "Concerns about availability - mentioned part-time preference but job is full-time.",
+      author: "John Smith",
+      createdAt: "2024-01-13T09:15:00Z",
+      updatedAt: "2024-01-13T09:15:00Z",
+      isPinned: false,
+      color: "red",
+      tags: ["Concern", "Availability"],
+      type: "concern",
+    },
+  ])
+
+  const [showNotesModal, setShowNotesModal] = useState(false)
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false)
+  const [editingNote, setEditingNote] = useState<any>(null)
+  const [noteContent, setNoteContent] = useState("")
+  const [noteColor, setNoteColor] = useState("blue")
+  const [noteTags, setNoteTags] = useState<string[]>([])
+  const [noteSearch, setNoteSearch] = useState("")
+  const [noteFilter, setNoteFilter] = useState("all")
 
   const defaultCriteria = [
     { id: "gender", name: "Gender", type: "select", options: ["Male", "Female", "Any"] },
@@ -225,6 +277,28 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
   ]
 
   const allCriteria = [...defaultCriteria, ...customCriteria]
+
+  const availableNoteTags = [
+    "Top Candidate",
+    "Follow up",
+    "Concern",
+    "Strong Portfolio",
+    "Good Fit",
+    "Salary",
+    "Availability",
+    "Skills Gap",
+    "Culture Fit",
+    "Interview Ready",
+  ]
+
+  const noteColors = [
+    { value: "blue", label: "Blue", class: "bg-blue-100 border-blue-300 text-blue-800" },
+    { value: "green", label: "Green", class: "bg-green-100 border-green-300 text-green-800" },
+    { value: "yellow", label: "Yellow", class: "bg-yellow-100 border-yellow-300 text-yellow-800" },
+    { value: "red", label: "Red", class: "bg-red-100 border-red-300 text-red-800" },
+    { value: "purple", label: "Purple", class: "bg-purple-100 border-purple-300 text-purple-800" },
+    { value: "gray", label: "Gray", class: "bg-gray-100 border-gray-300 text-gray-800" },
+  ]
 
   const filteredApplicants = applicants.filter((applicant) => {
     const matchesSearch = applicant.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -264,7 +338,123 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
     )
   })
 
+  const getApplicantNotes = (applicantId: number) => {
+    return notes.filter((note) => note.applicantId === applicantId)
+  }
+
+  const getFilteredNotes = (applicantId: number) => {
+    let applicantNotes = getApplicantNotes(applicantId)
+
+    if (noteSearch) {
+      applicantNotes = applicantNotes.filter(
+        (note) =>
+          note.content.toLowerCase().includes(noteSearch.toLowerCase()) ||
+          note.tags.some((tag: string) => tag.toLowerCase().includes(noteSearch.toLowerCase())) ||
+          note.author.toLowerCase().includes(noteSearch.toLowerCase()),
+      )
+    }
+
+    if (noteFilter !== "all") {
+      applicantNotes = applicantNotes.filter((note) => note.type === noteFilter)
+    }
+
+    return applicantNotes.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+  }
+
+  const getFilteredNotesForQuickView = (applicantId: number) => {
+    let applicantNotes = getApplicantNotes(applicantId)
+
+    // Filter by pin status using main filter
+    if (notePinFilter === "pinned") {
+      applicantNotes = applicantNotes.filter((note) => note.isPinned)
+    } else if (notePinFilter === "unpinned") {
+      applicantNotes = applicantNotes.filter((note) => !note.isPinned)
+    }
+
+    // Filter by color using main filter
+    if (noteColorFilterMain !== "all") {
+      applicantNotes = applicantNotes.filter((note) => note.color === noteColorFilterMain)
+    }
+
+    return applicantNotes.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+  }
+
   const handleAddNote = () => {
+    if (!noteContent.trim()) return
+
+    const newNote = {
+      id: Date.now(),
+      applicantId: selectedApplicant.id,
+      content: noteContent,
+      author: "Current User", // Replace with actual user
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isPinned: false,
+      color: noteColor,
+      tags: noteTags,
+      type: noteTags.includes("Concern") ? "concern" : noteTags.includes("Follow up") ? "reminder" : "feedback",
+    }
+
+    setNotes([...notes, newNote])
+    setNoteContent("")
+    setNoteTags([])
+    setNoteColor("blue")
+    setShowAddNoteModal(false)
+  }
+
+  const handleEditNote = (note: any) => {
+    setEditingNote(note)
+    setNoteContent(note.content)
+    setNoteColor(note.color)
+    setNoteTags(note.tags)
+    setShowAddNoteModal(true)
+  }
+
+  const handleUpdateNote = () => {
+    if (!noteContent.trim() || !editingNote) return
+
+    const updatedNotes = notes.map((note) =>
+      note.id === editingNote.id
+        ? {
+            ...note,
+            content: noteContent,
+            color: noteColor,
+            tags: noteTags,
+            updatedAt: new Date().toISOString(),
+            type: noteTags.includes("Concern") ? "concern" : noteTags.includes("Follow up") ? "reminder" : "feedback",
+          }
+        : note,
+    )
+
+    setNotes(updatedNotes)
+    setEditingNote(null)
+    setNoteContent("")
+    setNoteTags([])
+    setNoteColor("blue")
+    setShowAddNoteModal(false)
+  }
+
+  const handleDeleteNote = (noteId: number) => {
+    setNotes(notes.filter((note) => note.id !== noteId))
+  }
+
+  const handlePinNote = (noteId: number) => {
+    setNotes(notes.map((note) => (note.id === noteId ? { ...note, isPinned: !note.isPinned } : note)))
+  }
+
+  const handleTagToggle = (tag: string) => {
+    setNoteTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
+  const handleAddNoteOld = () => {
     if (newNote.trim()) {
       console.log("Adding note:", newNote)
       setNewNote("")
@@ -315,7 +505,7 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-9 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -403,6 +593,31 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
               <SelectItem value="Mobile Experience">Mobile Experience</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={notePinFilter} onValueChange={setNotePinFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Note Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Notes</SelectItem>
+              <SelectItem value="pinned">📌 Pinned Notes</SelectItem>
+              <SelectItem value="unpinned">📍 Unpinned Notes</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={noteColorFilterMain} onValueChange={setNoteColorFilterMain}>
+            <SelectTrigger>
+              <SelectValue placeholder="Note Color" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Colors</SelectItem>
+              <SelectItem value="blue">🔵 Blue Notes</SelectItem>
+              <SelectItem value="green">🟢 Green Notes</SelectItem>
+              <SelectItem value="yellow">🟡 Yellow Notes</SelectItem>
+              <SelectItem value="red">🔴 Red Notes</SelectItem>
+              <SelectItem value="purple">🟣 Purple Notes</SelectItem>
+              <SelectItem value="gray">⚪ Gray Notes</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -464,6 +679,12 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                           {applicant.screeningScore}% screen
                         </Badge>
                       </div>
+                      {getApplicantNotes(applicant.id).length > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <MessageSquare className="w-3 h-3 text-blue-600" />
+                          <span className="text-xs text-blue-600">{getApplicantNotes(applicant.id).length} notes</span>
+                        </div>
+                      )}
                       <p className="text-xs text-gray-400 mt-1">{applicant.appliedDate}</p>
                     </div>
                   </div>
@@ -710,6 +931,175 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                             ))}
                           </div>
                         </div>
+
+                        {/* Quick Notes Section */}
+                        <div className="mb-6">
+                          <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-medium text-gray-900">Quick Notes</h3>
+                            <Button size="sm" onClick={() => setShowAddNoteModal(true)}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Note
+                            </Button>
+                          </div>
+
+                          {/* Replace the old Note Filters section with this simpler version */}
+                          {(notePinFilter !== "all" || noteColorFilterMain !== "all") && (
+                            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm text-blue-800">
+                                  <span>Active filters:</span>
+                                  {notePinFilter !== "all" && (
+                                    <Badge variant="outline" className="text-blue-600">
+                                      {notePinFilter === "pinned" ? "📌 Pinned" : "📍 Unpinned"}
+                                    </Badge>
+                                  )}
+                                  {noteColorFilterMain !== "all" && (
+                                    <Badge variant="outline" className="text-blue-600">
+                                      {noteColors.find((c) => c.value === noteColorFilterMain)?.label} Notes
+                                    </Badge>
+                                  )}
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setNotePinFilter("all")
+                                    setNoteColorFilterMain("all")
+                                  }}
+                                  className="text-xs"
+                                >
+                                  Clear Note Filters
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Add Note Form */}
+                          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="space-y-3">
+                              <textarea
+                                value={noteContent}
+                                onChange={(e) => setNoteContent(e.target.value)}
+                                placeholder="Add a quick note about this applicant..."
+                                className="w-full h-20 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <div className="flex justify-between items-center">
+                                <div className="flex gap-2">
+                                  {noteColors.slice(0, 4).map((color) => (
+                                    <button
+                                      key={color.value}
+                                      onClick={() => setNoteColor(color.value)}
+                                      className={`w-6 h-6 rounded-full border-2 ${color.class} ${
+                                        noteColor === color.value ? "ring-2 ring-blue-500" : ""
+                                      }`}
+                                      title={color.label}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setNoteContent("")
+                                      setNoteColor("blue")
+                                      setNoteTags([])
+                                    }}
+                                  >
+                                    Clear
+                                  </Button>
+                                  <Button size="sm" onClick={handleAddNote} disabled={!noteContent.trim()}>
+                                    Add Note
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Recent Notes Display */}
+                          <div className="space-y-3">
+                            {getFilteredNotesForQuickView(selectedApplicant.id)
+                              .slice(0, 5)
+                              .map((note) => {
+                                const colorClass =
+                                  noteColors.find((c) => c.value === note.color)?.class ||
+                                  "bg-gray-100 border-gray-300 text-gray-800"
+                                return (
+                                  <div key={note.id} className={`p-3 rounded-lg border ${colorClass} relative`}>
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div className="flex flex-wrap gap-1">
+                                        {note.isPinned && (
+                                          <Badge variant="outline" className="text-xs">
+                                            📌 Pinned
+                                          </Badge>
+                                        )}
+                                        {note.tags.map((tag: string) => (
+                                          <Badge key={tag} variant="secondary" className="text-xs">
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                      <div className="flex gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handlePinNote(note.id)}
+                                          className="h-6 w-6 p-0"
+                                          title={note.isPinned ? "Unpin" : "Pin"}
+                                        >
+                                          {note.isPinned ? "📌" : "📍"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditNote(note)}
+                                          className="h-6 w-6 p-0"
+                                          title="Edit"
+                                        >
+                                          ✏️
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDeleteNote(note.id)}
+                                          className="h-6 w-6 p-0 text-red-600"
+                                          title="Delete"
+                                        >
+                                          🗑️
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <p className="text-sm mb-2">{note.content}</p>
+                                    <div className="flex justify-between items-center text-xs text-gray-500">
+                                      <span>By {note.author}</span>
+                                      <span>{new Date(note.updatedAt).toLocaleDateString()}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+
+                            {getFilteredNotesForQuickView(selectedApplicant.id).length === 0 && (
+                              <div className="text-center py-4 text-gray-500">
+                                <p className="text-sm">
+                                  {noteFilter !== "all" || noteColorFilter !== "all"
+                                    ? "No notes match the current filters"
+                                    : "No notes added yet"}
+                                </p>
+                              </div>
+                            )}
+
+                            {getApplicantNotes(selectedApplicant.id).length > 5 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowNotesModal(true)}
+                                className="w-full"
+                              >
+                                View All {getApplicantNotes(selectedApplicant.id).length} Notes
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -721,12 +1111,15 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                     <CardContent className="p-6">
                       <h2 className="text-xl font-semibold text-gray-900 mb-4">Applicant Evaluation</h2>
                       <Tabs defaultValue="screening" className="w-full">
-                        <TabsList className="grid w-full grid-cols-5">
+                        <TabsList className="grid w-full grid-cols-6">
                           <TabsTrigger value="screening">Screening Questions</TabsTrigger>
                           <TabsTrigger value="matching">Matching Criteria</TabsTrigger>
                           <TabsTrigger value="exam">Exam Management</TabsTrigger>
                           <TabsTrigger value="metrics">Evaluation Metrics</TabsTrigger>
                           <TabsTrigger value="interview">Interview Management</TabsTrigger>
+                          <TabsTrigger value="notes">
+                            Notes ({getApplicantNotes(selectedApplicant.id).length})
+                          </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="screening" className="mt-6">
@@ -1074,6 +1467,107 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                             </div>
                           </div>
                         </TabsContent>
+
+                        <TabsContent value="notes" className="mt-6">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="font-medium text-gray-900">Private Notes</h3>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => setShowNotesModal(true)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View All Notes
+                                </Button>
+                                <Button size="sm" onClick={() => setShowAddNoteModal(true)}>
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Add Note
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Recent Notes Preview */}
+                            <div className="space-y-3">
+                              {getFilteredNotes(selectedApplicant.id)
+                                .slice(0, 3)
+                                .map((note) => {
+                                  const colorClass =
+                                    noteColors.find((c) => c.value === note.color)?.class ||
+                                    "bg-gray-100 border-gray-300 text-gray-800"
+                                  return (
+                                    <div key={note.id} className={`p-4 rounded-lg border-2 ${colorClass} relative`}>
+                                      <div className="flex justify-between items-start mb-2">
+                                        <div className="flex flex-wrap gap-1">
+                                          {note.isPinned && (
+                                            <Badge variant="outline" className="text-xs mr-2">
+                                              📌 Pinned
+                                            </Badge>
+                                          )}
+                                          {note.tags.map((tag: string) => (
+                                            <Badge key={tag} variant="secondary" className="text-xs">
+                                              {tag}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                        <div className="flex gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handlePinNote(note.id)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            {note.isPinned ? "📌" : "📍"}
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleEditNote(note)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            ✏️
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleDeleteNote(note.id)}
+                                            className="h-6 w-6 p-0 text-red-600"
+                                          >
+                                            🗑️
+                                          </Button>
+                                        </div>
+                                      </div>
+                                      <p className="text-sm mb-2 whitespace-pre-wrap">{note.content}</p>
+                                      <div className="flex justify-between items-center text-xs opacity-75">
+                                        <span>By {note.author}</span>
+                                        <div className="flex gap-2">
+                                          <span>Created: {new Date(note.createdAt).toLocaleDateString()}</span>
+                                          {note.updatedAt !== note.createdAt && (
+                                            <span>Updated: {new Date(note.updatedAt).toLocaleDateString()}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+
+                              {getApplicantNotes(selectedApplicant.id).length === 0 && (
+                                <div className="text-center py-8 text-gray-500">
+                                  <p>No notes added yet</p>
+                                  <p className="text-sm">Add your first note to start documenting feedback</p>
+                                </div>
+                              )}
+
+                              {getApplicantNotes(selectedApplicant.id).length > 3 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowNotesModal(true)}
+                                  className="w-full"
+                                >
+                                  View All {getApplicantNotes(selectedApplicant.id).length} Notes
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
                       </Tabs>
                     </CardContent>
                   </Card>
@@ -1377,6 +1871,206 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
                 }}
               >
                 Create Criteria
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Notes Management Modal */}
+      {showNotesModal && (
+        <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Notes for {selectedApplicant.name}</DialogTitle>
+              <DialogDescription>Manage all private notes and feedback for this applicant</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Search and Filter */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search notes by content, tags, or author..."
+                    value={noteSearch}
+                    onChange={(e) => setNoteSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Select value={noteFilter} onValueChange={setNoteFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Notes</SelectItem>
+                    <SelectItem value="feedback">Feedback</SelectItem>
+                    <SelectItem value="reminder">Reminders</SelectItem>
+                    <SelectItem value="concern">Concerns</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Notes List */}
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {getFilteredNotes(selectedApplicant.id).map((note) => {
+                  const colorClass =
+                    noteColors.find((c) => c.value === note.color)?.class || "bg-gray-100 border-gray-300 text-gray-800"
+                  return (
+                    <div key={note.id} className={`p-4 rounded-lg border-2 ${colorClass} relative`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-wrap gap-1">
+                          {note.isPinned && (
+                            <Badge variant="outline" className="text-xs mr-2">
+                              📌 Pinned
+                            </Badge>
+                          )}
+                          {note.tags.map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePinNote(note.id)}
+                            className="h-6 w-6 p-0"
+                          >
+                            {note.isPinned ? "📌" : "📍"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditNote(note)}
+                            className="h-6 w-6 p-0"
+                          >
+                            ✏️
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteNote(note.id)}
+                            className="h-6 w-6 p-0 text-red-600"
+                          >
+                            🗑️
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm mb-2 whitespace-pre-wrap">{note.content}</p>
+                      <div className="flex justify-between items-center text-xs opacity-75">
+                        <span>By {note.author}</span>
+                        <div className="flex gap-2">
+                          <span>Created: {new Date(note.createdAt).toLocaleDateString()}</span>
+                          {note.updatedAt !== note.createdAt && (
+                            <span>Updated: {new Date(note.updatedAt).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {getFilteredNotes(selectedApplicant.id).length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No notes found</p>
+                  <p className="text-sm">Try adjusting your search or filter criteria</p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNotesModal(false)}>
+                Close
+              </Button>
+              <Button onClick={() => setShowAddNoteModal(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Note
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add/Edit Note Modal */}
+      {showAddNoteModal && (
+        <Dialog open={showAddNoteModal} onOpenChange={setShowAddNoteModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingNote ? "Edit Note" : "Add New Note"} for {selectedApplicant.name}
+              </DialogTitle>
+              <DialogDescription>
+                Add private feedback, impressions, or reminders about this applicant
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Note Content */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Note Content</label>
+                <textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  placeholder="Enter your note here..."
+                  className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Color Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <div className="flex gap-2">
+                  {noteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setNoteColor(color.value)}
+                      className={`w-8 h-8 rounded-full border-2 ${color.class} ${
+                        noteColor === color.value ? "ring-2 ring-blue-500" : ""
+                      }`}
+                      title={color.label}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableNoteTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagToggle(tag)}
+                      className={`px-3 py-1 text-sm rounded-full border ${
+                        noteTags.includes(tag)
+                          ? "bg-blue-100 border-blue-300 text-blue-800"
+                          : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddNoteModal(false)
+                  setEditingNote(null)
+                  setNoteContent("")
+                  setNoteTags([])
+                  setNoteColor("blue")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={editingNote ? handleUpdateNote : handleAddNote}>
+                {editingNote ? "Update Note" : "Add Note"}
               </Button>
             </DialogFooter>
           </DialogContent>

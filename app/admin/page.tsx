@@ -291,7 +291,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Navigation Cards */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link href="/admin/companies">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardContent className="p-6">
@@ -328,6 +328,19 @@ export default function AdminDashboard() {
                   <div>
                     <h3 className="font-semibold text-lg">Analytics & Reports</h3>
                     <p className="text-gray-600">View platform analytics</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/data-configuration">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <Settings className="h-8 w-8 text-indigo-600" />
+                  <div>
+                    <h3 className="font-semibold text-lg">Data Configuration</h3>
+                    <p className="text-gray-600">Configure dynamic data options</p>
                   </div>
                 </div>
               </CardContent>
