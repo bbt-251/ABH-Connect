@@ -2,9 +2,21 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Search, MapPin, ChevronDown, BookmarkIcon, X, Briefcase, DollarSign } from "lucide-react"
+import {
+  Search,
+  MapPin,
+  ChevronDown,
+  BookmarkIcon,
+  X,
+  Briefcase,
+  DollarSign,
+  ExternalLink,
+  Star,
+  Users,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
 // Sample data for jobs
 const jobListings = [
@@ -70,12 +82,214 @@ const popularCompanies = [
   { name: "Alliance Data", jobs: 30, logo: "/placeholder.svg?height=24&width=24" },
 ]
 
+// Sponsored job listings (looks like regular jobs but sponsored)
+const sponsoredJobs = [
+  {
+    id: "s1",
+    title: "Senior Software Engineer",
+    company: "TechCorp Solutions",
+    location: "Remote",
+    experience: "5+ Years",
+    jobType: "Full-Time",
+    salary: "$120k - $150k",
+    salaryPeriod: "per year",
+    logo: "/placeholder.svg?height=40&width=40",
+    postedTime: "2 hours ago",
+    sponsored: true,
+    featured: true,
+  },
+  {
+    id: "s2",
+    title: "Data Scientist",
+    company: "DataDriven Analytics",
+    location: "San Francisco, CA",
+    experience: "3-5 Years",
+    jobType: "Full-Time",
+    salary: "$95k - $130k",
+    salaryPeriod: "per year",
+    logo: "/placeholder.svg?height=40&width=40",
+    postedTime: "4 hours ago",
+    sponsored: true,
+  },
+]
+
+// Company spotlight data (very discrete)
+const companySpotlights = [
+  {
+    name: "TechCorp Solutions",
+    logo: "/placeholder.svg?height=32&width=32",
+    tagline: "Building tomorrow's technology",
+    employees: "500+",
+    rating: 4.8,
+    openJobs: 25,
+  },
+  {
+    name: "GreenTech Innovations",
+    logo: "/placeholder.svg?height=32&width=32",
+    tagline: "Sustainable tech solutions",
+    employees: "200+",
+    rating: 4.9,
+    openJobs: 15,
+  },
+  {
+    name: "DataDriven Analytics",
+    logo: "/placeholder.svg?height=32&width=32",
+    tagline: "Data-powered insights",
+    employees: "150+",
+    rating: 4.7,
+    openJobs: 12,
+  },
+]
+
+// Alternative 1: Native Sponsored Job Card (looks like regular job)
+function SponsoredJobCard({ job, onClick, isSelected }: any) {
+  return (
+    <div
+      className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer relative ${
+        isSelected ? "border-[#0a3141] bg-blue-50" : "border-gray-100"
+      } ${job.featured ? "border-l-4 border-l-[#d2f277]" : ""}`}
+      onClick={() => onClick(job)}
+    >
+      {job.sponsored && (
+        <Badge variant="outline" className="absolute top-4 right-4 text-xs bg-gray-50 text-gray-600">
+          Sponsored
+        </Badge>
+      )}
+      {job.featured && <Badge className="absolute top-4 right-20 text-xs bg-[#d2f277] text-black">Featured</Badge>}
+
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
+          <Image src={job.logo || "/placeholder.svg"} alt={`${job.company} logo`} width={48} height={48} />
+        </div>
+        <div className="flex-1">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
+            <div>
+              <h3 className="font-semibold text-lg">{job.title}</h3>
+              <p className="text-gray-500">
+                {job.company} · {job.location}
+              </p>
+            </div>
+            <button className="text-[#0a3141] flex items-center mt-2 md:mt-0">
+              <BookmarkIcon className="w-4 h-4 mr-1" />
+              Save Job
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-gray-500">Experience</p>
+              <p className="font-medium">{job.experience}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Job Type</p>
+              <p className="font-medium">{job.jobType}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Salary</p>
+              <p className="font-medium">
+                {job.salary} <span className="text-xs text-gray-500">{job.salaryPeriod}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Posted {job.postedTime}</p>
+            <Button className="bg-[#d2f277] text-black hover:bg-[#c2e267]">Apply</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Alternative 2: Minimal Company Spotlight Card
+function CompanySpotlightCard({ company }: { company: any }) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-sm transition-shadow">
+      <div className="flex items-center gap-3 mb-3">
+        <Image src={company.logo || "/placeholder.svg"} alt={company.name} width={32} height={32} className="rounded" />
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-sm truncate">{company.name}</h4>
+          <p className="text-xs text-gray-500 truncate">{company.tagline}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+        <span className="flex items-center gap-1">
+          <Users className="w-3 h-3" />
+          {company.employees}
+        </span>
+        <span className="flex items-center gap-1">
+          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+          {company.rating}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-[#0a3141]">{company.openJobs} open roles</span>
+        <Button size="sm" variant="ghost" className="text-xs h-6 px-2">
+          View <ExternalLink className="w-3 h-3 ml-1" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// Alternative 3: Subtle Text-Only Promotion
+function TextOnlyPromotion() {
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+      <p className="text-sm text-gray-600 mb-2">
+        <span className="font-medium">Looking for top talent?</span> Join 500+ companies finding great candidates.
+      </p>
+      <Button variant="link" className="text-xs text-[#0a3141] p-0 h-auto">
+        Post a job →
+      </Button>
+    </div>
+  )
+}
+
+// Alternative 4: Company Logo Carousel (very subtle)
+function CompanyLogoCarousel() {
+  return (
+    <div className="bg-white border border-gray-100 rounded-lg p-4">
+      <p className="text-xs text-gray-500 text-center mb-3">Trusted by leading companies</p>
+      <div className="flex items-center justify-center gap-4 opacity-60">
+        {companySpotlights.map((company, index) => (
+          <Image
+            key={index}
+            src={company.logo || "/placeholder.svg"}
+            alt={company.name}
+            width={24}
+            height={24}
+            className="grayscale hover:grayscale-0 transition-all"
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Alternative 5: Inline Company Mention (very discrete)
+function InlineCompanyMention() {
+  return (
+    <div className="bg-blue-50 border-l-2 border-blue-200 p-3 rounded-r-lg">
+      <p className="text-sm text-gray-700">
+        💡 <span className="font-medium">TechCorp Solutions</span> is actively hiring.
+        <button className="text-[#0a3141] underline ml-1">See 25 open positions</button>
+      </p>
+    </div>
+  )
+}
+
 export default function AllJobsPage() {
   const [jobTitle, setJobTitle] = useState("Designer")
   const [location, setLocation] = useState("Chicago, IL")
   const [email, setEmail] = useState("")
   const [resultsCount, setResultsCount] = useState(284)
-  const [selectedJob, setSelectedJob] = useState<(typeof jobListings)[0] | null>(null)
+  const [selectedJob, setSelectedJob] = useState<any>(null)
+  const [adStyle, setAdStyle] = useState<"native" | "spotlight" | "text" | "logos" | "inline">("native")
+
+  // Combine regular and sponsored jobs
+  const allJobs = [...sponsoredJobs, ...jobListings]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,11 +323,47 @@ export default function AllJobsPage() {
         </div>
       </section>
 
+      {/* Ad Style Selector (for demo purposes) */}
+      <section className="container mx-auto px-4 py-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+          <p className="text-sm text-gray-600 mb-2">Advertisement Style Preview:</p>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant={adStyle === "native" ? "default" : "outline"}
+              onClick={() => setAdStyle("native")}
+            >
+              Native Jobs
+            </Button>
+            <Button
+              size="sm"
+              variant={adStyle === "spotlight" ? "default" : "outline"}
+              onClick={() => setAdStyle("spotlight")}
+            >
+              Company Spotlight
+            </Button>
+            <Button size="sm" variant={adStyle === "text" ? "default" : "outline"} onClick={() => setAdStyle("text")}>
+              Text Only
+            </Button>
+            <Button size="sm" variant={adStyle === "logos" ? "default" : "outline"} onClick={() => setAdStyle("logos")}>
+              Logo Carousel
+            </Button>
+            <Button
+              size="sm"
+              variant={adStyle === "inline" ? "default" : "outline"}
+              onClick={() => setAdStyle("inline")}
+            >
+              Inline Mention
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pb-8">
         <div className="flex gap-8">
           {/* Filters Sidebar */}
-          <div className="w-full md:w-64 shrink-0">
+          <div className="w-full md:w-64 shrink-0 space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-semibold text-lg">Filters</h2>
@@ -233,6 +483,28 @@ export default function AllJobsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Sidebar Advertisements based on selected style */}
+            {adStyle === "spotlight" && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-500">FEATURED COMPANIES</h3>
+                {companySpotlights.map((company, index) => (
+                  <CompanySpotlightCard key={index} company={company} />
+                ))}
+              </div>
+            )}
+
+            {adStyle === "text" && (
+              <div className="space-y-4">
+                <TextOnlyPromotion />
+              </div>
+            )}
+
+            {adStyle === "logos" && (
+              <div className="space-y-4">
+                <CompanyLogoCarousel />
+              </div>
+            )}
           </div>
 
           {/* Job Listings */}
@@ -250,59 +522,80 @@ export default function AllJobsPage() {
 
             {/* Job Cards */}
             <div className="space-y-4">
-              {jobListings.map((job) => (
-                <div
-                  key={job.id}
-                  className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer ${selectedJob?.id === job.id ? "border-[#0a3141] bg-blue-50" : "border-gray-100"}`}
-                  onClick={() => setSelectedJob(job)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
-                      <Image src={job.logo || "/placeholder.svg"} alt={`${job.company} logo`} width={48} height={48} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg">{job.title}</h3>
-                          <p className="text-gray-500">
-                            {job.company} · {job.location}
-                          </p>
+              {allJobs.map((job, index) => (
+                <div key={job.id}>
+                  {/* Show different ad styles based on selection */}
+                  {adStyle === "native" ? (
+                    <SponsoredJobCard job={job} onClick={setSelectedJob} isSelected={selectedJob?.id === job.id} />
+                  ) : (
+                    <div
+                      className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer ${
+                        selectedJob?.id === job.id ? "border-[#0a3141] bg-blue-50" : "border-gray-100"
+                      }`}
+                      onClick={() => setSelectedJob(job)}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                          <Image
+                            src={job.logo || "/placeholder.svg"}
+                            alt={`${job.company} logo`}
+                            width={48}
+                            height={48}
+                          />
                         </div>
-                        <button className="text-[#0a3141] flex items-center mt-2 md:mt-0">
-                          <BookmarkIcon className="w-4 h-4 mr-1" />
-                          Save Job
-                        </button>
-                      </div>
+                        <div className="flex-1">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
+                            <div>
+                              <h3 className="font-semibold text-lg">{job.title}</h3>
+                              <p className="text-gray-500">
+                                {job.company} · {job.location}
+                              </p>
+                            </div>
+                            <button className="text-[#0a3141] flex items-center mt-2 md:mt-0">
+                              <BookmarkIcon className="w-4 h-4 mr-1" />
+                              Save Job
+                            </button>
+                          </div>
 
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-xs text-gray-500">Experience</p>
-                          <p className="font-medium">{job.experience}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Job Type</p>
-                          <p className="font-medium">{job.jobType}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Salary</p>
-                          <p className="font-medium">
-                            {job.salary} <span className="text-xs text-gray-500">{job.salaryPeriod}</span>
-                          </p>
-                        </div>
-                      </div>
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <p className="text-xs text-gray-500">Experience</p>
+                              <p className="font-medium">{job.experience}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Job Type</p>
+                              <p className="font-medium">{job.jobType}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Salary</p>
+                              <p className="font-medium">
+                                {job.salary} <span className="text-xs text-gray-500">{job.salaryPeriod}</span>
+                              </p>
+                            </div>
+                          </div>
 
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500">Posted {job.postedTime}</p>
-                        <Button className="bg-[#d2f277] text-black hover:bg-[#c2e267]">Apply</Button>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-gray-500">Posted {job.postedTime}</p>
+                            <Button className="bg-[#d2f277] text-black hover:bg-[#c2e267]">Apply</Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Inline company mention after 2nd job */}
+                  {index === 1 && adStyle === "inline" && (
+                    <div className="my-4">
+                      <InlineCompanyMention />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
       </main>
+
       {/* Job Detail Panel */}
       {selectedJob && (
         <div className="fixed inset-y-0 right-0 w-[500px] bg-white shadow-xl border-l border-gray-200 z-50 overflow-y-auto">
@@ -331,6 +624,9 @@ export default function AllJobsPage() {
                 </span>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Remote</span>
                 <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">Senior Level</span>
+                {selectedJob.sponsored && (
+                  <span className="px-3 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">Sponsored</span>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -363,7 +659,7 @@ export default function AllJobsPage() {
 
               <div className="flex gap-3">
                 <Button className="flex-1 bg-[#d2f277] text-black hover:bg-[#c2e267]">Apply now</Button>
-                <Button variant="outline" className="border-[#0a3141] text-[#0a3141]">
+                <Button variant="outline" className="border-[#0a3141] text-[#0a3141] bg-transparent">
                   <BookmarkIcon className="w-4 h-4" />
                 </Button>
               </div>
@@ -479,7 +775,7 @@ export default function AllJobsPage() {
               <div className="border-t pt-6">
                 <div className="flex gap-3 mb-4">
                   <Button className="flex-1 bg-[#d2f277] text-black hover:bg-[#c2e267]">Apply now</Button>
-                  <Button variant="outline" className="border-[#0a3141] text-[#0a3141]">
+                  <Button variant="outline" className="border-[#0a3141] text-[#0a3141] bg-transparent">
                     <BookmarkIcon className="w-4 h-4" />
                   </Button>
                 </div>
