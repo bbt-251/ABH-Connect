@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Brain, Plus, Search, MoreVertical, Edit, Trash2, Tag, Briefcase, X, Users } from "lucide-react"
+import { Brain, Plus, Search, MoreVertical, Edit, Trash2, Tag, Briefcase, X, Users, Target } from "lucide-react"
 
 interface Skill {
   id: string
@@ -38,6 +38,11 @@ interface Occupation {
   requiredSkills: string[]
   experienceLevel: string
   averageSalary: string
+}
+
+interface MatchedSkill extends Skill {
+  matchScore: number
+  matchReason: string
 }
 
 export default function SkillBasePage() {
@@ -83,6 +88,34 @@ export default function SkillBasePage() {
       description: "User interface and user experience design for creating intuitive and engaging digital products.",
       tags: ["Design", "UI/UX", "Creative", "User Research"],
       relatedPositions: ["UI Designer", "UX Designer", "Product Designer", "Visual Designer"],
+    },
+    {
+      id: "SKL007",
+      name: "Node.js",
+      description: "JavaScript runtime for building scalable server-side applications and APIs.",
+      tags: ["Backend", "JavaScript", "Web Development", "API"],
+      relatedPositions: ["Backend Developer", "Full Stack Developer", "API Developer"],
+    },
+    {
+      id: "SKL008",
+      name: "Machine Learning",
+      description: "Algorithms and statistical models that enable computers to learn and make decisions from data.",
+      tags: ["AI/ML", "Data Science", "Programming", "Analytics"],
+      relatedPositions: ["ML Engineer", "Data Scientist", "AI Researcher", "Data Analyst"],
+    },
+    {
+      id: "SKL009",
+      name: "Docker",
+      description: "Containerization platform for packaging applications and their dependencies.",
+      tags: ["DevOps", "Cloud", "Infrastructure", "Deployment"],
+      relatedPositions: ["DevOps Engineer", "Cloud Engineer", "Software Engineer"],
+    },
+    {
+      id: "SKL010",
+      name: "Agile Methodology",
+      description: "Iterative approach to project management and software development.",
+      tags: ["Management", "Planning", "Communication", "Leadership"],
+      relatedPositions: ["Scrum Master", "Project Manager", "Product Manager", "Team Lead"],
     },
   ])
 
@@ -145,6 +178,9 @@ export default function SkillBasePage() {
 
   const [skillSearchTerm, setSkillSearchTerm] = useState("")
   const [occupationSearchTerm, setOccupationSearchTerm] = useState("")
+  const [positionSearchTerm, setPositionSearchTerm] = useState("")
+  const [matchedSkills, setMatchedSkills] = useState<MatchedSkill[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const [selectedTag, setSelectedTag] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [isCreateSkillModalOpen, setIsCreateSkillModalOpen] = useState(false)
@@ -217,6 +253,78 @@ export default function SkillBasePage() {
       !selectedCategory || selectedCategory === "all-categories" || occupation.category === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  const searchSkillsForPosition = () => {
+    if (!positionSearchTerm.trim()) return
+
+    setIsSearching(true)
+
+    // Simulate API call delay
+    setTimeout(() => {
+      const searchTerm = positionSearchTerm.toLowerCase()
+      const matches: MatchedSkill[] = []
+
+      skills.forEach((skill) => {
+        let matchScore = 0
+        let matchReason = ""
+
+        // Check if position is directly in relatedPositions
+        const directMatch = skill.relatedPositions.some(
+          (pos) => pos.toLowerCase().includes(searchTerm) || searchTerm.includes(pos.toLowerCase()),
+        )
+
+        if (directMatch) {
+          matchScore = 95
+          matchReason = "Direct position match"
+        } else {
+          // Check for keyword matches in skill name
+          if (skill.name.toLowerCase().includes(searchTerm) || searchTerm.includes(skill.name.toLowerCase())) {
+            matchScore = 85
+            matchReason = "Skill name relevance"
+          }
+          // Check for tag matches
+          else if (
+            skill.tags.some((tag) => tag.toLowerCase().includes(searchTerm) || searchTerm.includes(tag.toLowerCase()))
+          ) {
+            matchScore = 70
+            matchReason = "Tag relevance"
+          }
+          // Check for description matches
+          else if (skill.description.toLowerCase().includes(searchTerm)) {
+            matchScore = 60
+            matchReason = "Description relevance"
+          }
+          // Check for partial matches in related positions
+          else if (
+            skill.relatedPositions.some((pos) => {
+              const posWords = pos.toLowerCase().split(" ")
+              const searchWords = searchTerm.split(" ")
+              return posWords.some((posWord) =>
+                searchWords.some((searchWord) => posWord.includes(searchWord) || searchWord.includes(posWord)),
+              )
+            })
+          ) {
+            matchScore = 50
+            matchReason = "Related position similarity"
+          }
+        }
+
+        if (matchScore > 0) {
+          matches.push({
+            ...skill,
+            matchScore,
+            matchReason,
+          })
+        }
+      })
+
+      // Sort by match score (highest first)
+      matches.sort((a, b) => b.matchScore - a.matchScore)
+
+      setMatchedSkills(matches)
+      setIsSearching(false)
+    }, 800)
+  }
 
   const generateSkillId = () => {
     const maxId = skills.reduce((max, skill) => {
@@ -335,6 +443,13 @@ export default function SkillBasePage() {
     }
   }
 
+  const getMatchScoreColor = (score: number) => {
+    if (score >= 90) return "bg-green-100 text-green-800"
+    if (score >= 70) return "bg-blue-100 text-blue-800"
+    if (score >= 50) return "bg-yellow-100 text-yellow-800"
+    return "bg-gray-100 text-gray-800"
+  }
+
   const uniqueTags = Array.from(new Set(skills.flatMap((skill) => skill.tags)))
   const uniqueCategories = Array.from(new Set(occupations.map((occupation) => occupation.category)))
 
@@ -349,7 +464,7 @@ export default function SkillBasePage() {
                 <Brain className="h-8 w-8 text-pink-600 mr-3" />
                 Skill Base Management
               </h1>
-              <p className="text-gray-600 mt-1">Manage skills and occupations in the system</p>
+              <p className="text-gray-600 mt-1">Manage skills, occupations, and find skill matches</p>
             </div>
           </div>
         </div>
@@ -406,9 +521,10 @@ export default function SkillBasePage() {
 
         {/* Tabs */}
         <Tabs defaultValue="skills" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="occupations">Occupations</TabsTrigger>
+            <TabsTrigger value="skill-matching">Skill Matching</TabsTrigger>
           </TabsList>
 
           {/* Skills Tab */}
@@ -790,6 +906,119 @@ export default function SkillBasePage() {
                   ))}
                 </TableBody>
               </Table>
+            </Card>
+          </TabsContent>
+
+          {/* Skill Matching Tab */}
+          <TabsContent value="skill-matching" className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <Target className="h-6 w-6 text-orange-600" />
+                  <h2 className="text-xl font-semibold">Position-Based Skill Matching</h2>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Enter a job position to find the most relevant skills from our skill base.
+                </p>
+
+                <div className="flex gap-4 mb-6">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Enter position (e.g., Frontend Developer, Data Scientist, Project Manager)"
+                      value={positionSearchTerm}
+                      onChange={(e) => setPositionSearchTerm(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && searchSkillsForPosition()}
+                    />
+                  </div>
+                  <Button onClick={searchSkillsForPosition} disabled={!positionSearchTerm.trim() || isSearching}>
+                    {isSearching ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4 mr-2" />
+                        Search Skills
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {matchedSkills.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium">Matched Skills for "{positionSearchTerm}"</h3>
+                      <Badge variant="outline" className="text-sm">
+                        {matchedSkills.length} skills found
+                      </Badge>
+                    </div>
+
+                    <Card>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Skill</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Match Score</TableHead>
+                            <TableHead>Match Reason</TableHead>
+                            <TableHead>Tags</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {matchedSkills.map((skill) => (
+                            <TableRow key={skill.id}>
+                              <TableCell className="font-semibold">{skill.name}</TableCell>
+                              <TableCell className="max-w-xs truncate">{skill.description}</TableCell>
+                              <TableCell>
+                                <Badge className={`${getMatchScoreColor(skill.matchScore)} font-medium`}>
+                                  {skill.matchScore}%
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-gray-600">{skill.matchReason}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {skill.tags.slice(0, 2).map((tag, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                  {skill.tags.length > 2 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{skill.tags.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Card>
+                  </div>
+                )}
+
+                {positionSearchTerm && matchedSkills.length === 0 && !isSearching && (
+                  <div className="text-center py-8">
+                    <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No skills found</h3>
+                    <p className="text-gray-600">
+                      No skills match the position "{positionSearchTerm}". Try a different position or add more skills
+                      to the database.
+                    </p>
+                  </div>
+                )}
+
+                {!positionSearchTerm && matchedSkills.length === 0 && (
+                  <div className="text-center py-8">
+                    <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Search for Skills</h3>
+                    <p className="text-gray-600">
+                      Enter a job position above to find relevant skills from our database.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
