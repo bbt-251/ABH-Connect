@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Building2, BarChart3, Brain } from "lucide-react"
+import { Users, Building2, BarChart3, Brain, Package } from "lucide-react"
 import Link from "next/link"
 
 export default function AdminDashboard() {
@@ -50,6 +50,15 @@ export default function AdminDashboard() {
       href: "/admin/skill-base",
       color: "text-pink-600",
       bgColor: "bg-pink-100",
+    },
+    {
+      title: "Package Options",
+      value: "5",
+      description: "Subscription packages",
+      icon: Package,
+      href: "/admin/package-options",
+      color: "text-cyan-600",
+      bgColor: "bg-cyan-100",
     },
   ]
 
